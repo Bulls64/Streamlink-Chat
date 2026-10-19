@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.ruff_cache/
+
+# Données personnelles (créées au premier lancement)
+chat.json
+cache/
+*.log
+*.bak
+*.tmp
+
+# Compilation (PyInstaller, AppImage)
+build/
+dist/
+*.spec
+packaging/appimage/.cache/
+
+# Binaires : publiés dans les Releases GitHub, pas dans Git
+*.exe
+*.AppImage
+*.zip

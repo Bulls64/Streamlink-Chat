@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.bulls64.StreamlinkChat</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Streamlink Chat</name>
+  <summary>Twitch, Kick and Steam TV chats in one window</summary>
+  <description>
+    <p>A lightweight chat client for Twitch, Kick and Steam TV, in the style of Streamlink Launcher: one tab per
+      chat, badges, emotes (Twitch, BetterTTV, FrankerFaceZ, 7TV), mentions, light and dark themes, five languages.
+      Reading needs no account.</p>
+  </description>
+  <launchable type="desktop-id">io.github.bulls64.StreamlinkChat.desktop</launchable>
+  <url type="homepage">https://github.com/Bulls64/Streamlink-Chat</url>
+  <url type="bugtracker">https://github.com/Bulls64/Streamlink-Chat/issues</url>
+  <developer id="io.github.bulls64">
+    <name>Bulls64</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+</component>

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Streamlink Chat
+GenericName=Live chat
+GenericName[fr]=Chat de streams
+Comment=Twitch, Kick and Steam TV chats in one window
+Comment[fr]=Les chats Twitch, Kick et Steam TV dans une fenêtre
+Exec=streamlink-chat %u
+Icon=streamlink-chat
+Terminal=false
+Categories=Network;Chat;
+Keywords=twitch;kick;steam;chat;stream;chatterino;
+StartupWMClass=StreamlinkChat

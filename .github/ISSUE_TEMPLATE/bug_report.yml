@@ -1,0 +1,37 @@
+name: Bug report · Signaler un bug
+description: Something does not work as expected · Quelque chose ne fonctionne pas
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Streamlink Chat version · Version de Streamlink Chat
+      description: Bottom of the settings panel · En bas des paramètres
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How do you run it? · Comment le lancez-vous ?
+      options: [".exe (release)", "AppImage", "From source · Depuis les sources"]
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System and platform · Système et plateforme (Twitch, Kick, Steam TV)
+      placeholder: "Windows 11 23H2, Kick"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? · Que s'est-il passé ?
+      description: Steps to reproduce, what you expected · Étapes pour reproduire, ce que vous attendiez
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log · Journal
+      description: Content of `chat.log` (next to `chat.json`); remove anything private · Contenu de `chat.log`, à côté de `chat.json`
+      render: text
