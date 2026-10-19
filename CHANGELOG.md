@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- **Updates from GitHub**, as in Streamlink Launcher: *Settings › Updates* shows the installed version, checks the latest release (at start-up, on by default, or with *Check*) and, for the Windows executable, downloads it, checks its size and SHA-256 (and signature if the current one is signed), replaces the running file and restarts with your open chats. *Automatic updates* (off by default) does it by itself at start-up. From the sources or with the AppImage, the release page opens instead. A badge on the settings button shows when an update is available.
+
 ## [0.1.0] - 2026-10-17
 
 ### Added
@@ -26,6 +29,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+### Ajouté
+- **Mises à jour depuis GitHub**, comme dans Streamlink Launcher : *Paramètres › Mises à jour* affiche la version installée, consulte la dernière release (au démarrage, activé par défaut, ou avec *Vérifier*) et, pour l'exécutable Windows, la télécharge, contrôle sa taille et son SHA-256 (et sa signature si l'actuel est signé), remplace le fichier en cours et redémarre avec tes chats ouverts. *Mises à jour automatiques* (désactivé par défaut) le fait tout seul au démarrage. Depuis les sources ou avec l'AppImage, la page de la release s'ouvre à la place. Une pastille sur le bouton des paramètres signale une mise à jour disponible.
 
 ## [0.1.0] - 2026-10-17
 

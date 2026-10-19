@@ -818,3 +818,71 @@ class Toast(tk.Canvas):
             self.destroy()
         except tk.TclError:
             pass
+
+
+class StatusCard(Widget):
+    """Carte d'état (Streamlink trouvé / introuvable) avec un bouton à droite."""
+
+    LEVELS = {"ok": ("check", "ok"), "warn": ("warning", "warn"), "update": ("arrow_up", "warn"),
+              "busy": ("sync", "muted")}
+    zone_cursor = True
+
+    def __init__(self, parent, app, ok, title, detail, button, on_button):
+        self.level = "ok" if ok else "warn"
+        self.title, self.detail, self.button, self.on_button = title, detail, button, on_button
+        self.primary = False
+        super().__init__(parent, app, width=app.px(300), height=app.px(60), command=None, focusable=False)
+
+    @property
+    def ok(self):
+        return self.level == "ok"
+
+    def set_state(self, ok, title, detail, button=None, level=None, primary=False):
+        """level : ok, warn, update (mise à jour disponible) ou busy (vérification en cours)."""
+        self.level = level or ("ok" if ok else "warn")
+        self.title, self.detail, self.primary = title, detail, primary
+        if button is not None:
+            self.button = button
+        self.redraw()
+
+    def _btn(self, w, h):
+        if not self.button:  # pas de bouton (opération en cours)
+            return w - self.px(12), h / 2, w - self.px(12), h / 2
+        tw = self.app.fonts.small.measure(self.button)
+        return w - self.px(12) - tw - self.px(24), h / 2 - self.px(16), w - self.px(12), h / 2 + self.px(16)
+
+    def zone_at(self, x, y):
+        if not self.button:
+            return None
+        x0, y0, x1, y1 = self._btn(self.winfo_width(), self.winfo_height())
+        return "btn" if x0 <= x <= x1 and y0 <= y <= y1 else None
+
+    def on_click(self, e):
+        if self.zone_at(e.x, e.y) == "btn":
+            self.on_button()
+
+    def draw(self, w, h):
+        c, f, px, bg = self.c, self.app.fonts, self.px, self.cget("bg")
+        self.P.round_rect(self, 0, 0, w, h, px(10), c.field, c.border, bg)
+        icon, color_key = self.LEVELS.get(self.level, self.LEVELS["warn"])
+        color = c[color_key]
+        box = mix(c.field, color, 0.16)
+        self.P.round_rect(self, px(12), h / 2 - px(16), px(44), h / 2 + px(16), px(8), box, box, c.field)
+        self.icon(icon, px(28), h / 2, px(15), color)
+        x0, y0, x1, y1 = self._btn(w, h)
+        avail = x0 - px(56) - px(10)
+        self.create_text(px(56), h / 2 - px(9), text=fit_text(f.body_semi, self.title, avail), font=f.body_semi,
+                         fill=c.text, anchor="w")
+        self.create_text(px(56), h / 2 + px(10), text=fit_text(f.tiny, self.detail, avail), font=f.tiny,
+                         fill=c.faint, anchor="w")
+        if not self.button:
+            return
+        if self.primary:
+            col, on = self.app.accent
+            fill = mix(col, "#000000" if c.dark else "#FFFFFF", 0.12) if self.zone else col
+            self.P.round_rect(self, x0, y0, x1, y1, px(7), fill, fill, c.field)
+            self.create_text((x0 + x1) / 2, h / 2, text=self.button, font=f.small_semi, fill=on)
+        else:
+            fill = c.hover(c.field) if self.zone else c.field
+            self.P.round_rect(self, x0, y0, x1, y1, px(7), fill, c.border_strong if self.zone else c.border, c.field)
+            self.create_text((x0 + x1) / 2, h / 2, text=self.button, font=f.small, fill=c.text)

@@ -22,6 +22,7 @@ Pure Python + Tkinter, **no third-party dependency**.
 - **Comfortable reading**: scrolling up pauses the chat, *New messages* takes you back down; message time, badges, text size and history length can be changed.
 - **Writing** (Twitch and Kick): <kbd>Tab</kbd> completes usernames and emotes, <kbd>↑</kbd> recalls your last messages, right-click a username to mention it.
 - **Watch**: the ▶ button starts the stream with [Streamlink](https://streamlink.github.io/).
+- **Updates**: *Settings › Updates* checks GitHub for a new version (at start-up, or with *Check*) and installs it in one click; an option installs it by itself at start-up.
 - **Interface**: light, dark or automatic theme (follows Windows), in English, French, Spanish, German and Italian.
 
 | Light theme | Settings |
@@ -74,6 +75,14 @@ Writing needs your own (free) application on each platform, so that no secret is
 
 Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in plain text on Linux, in your home folder). *Log out* removes them.
 
+### Updates
+
+*Settings › Updates* shows the installed version and checks the [latest release](https://github.com/Bulls64/Streamlink-Chat/releases/latest): automatically a few seconds after start-up (*Check for updates at start-up*, on by default) or with the *Check* button. When a newer version exists, *Update* downloads the executable, checks it and restarts Streamlink Chat with your open chats. With *Automatic updates* (off by default), this happens by itself at start-up.
+
+- The file must be the release asset of this repository, with the size and the SHA-256 published by GitHub, and look like a Windows executable. Redirects are followed only to GitHub. If the current executable is signed, the new one must be signed by the same publisher.
+- The previous executable is renamed `.old` and removed at the next start; on any failure, it is put back. A file named after its version (`StreamlinkChat-0.1.0.exe`) takes the new number.
+- Installing by itself only works for the Windows `.exe` in a folder you can write to. From the sources or with the AppImage, *Update* opens the release page instead.
+
 ### Keyboard
 
 | Action | Keys |
@@ -96,7 +105,7 @@ Files are stored next to `slink_chat.py` or the `.exe`; if that folder is read-o
 
 ### Network and privacy
 
-Streamlink Chat connects only to: the chats themselves (Twitch IRC, Kick at `kick.com` / `web.kick.com` and its real-time server, Steam at `steamcommunity.com`); emote lists and images from Twitch, BetterTTV, FrankerFaceZ and 7TV (each can be turned off); and, for writing, the official Twitch and Kick login and chat APIs. Nothing else is sent.
+Streamlink Chat connects only to: the chats themselves (Twitch IRC, Kick at `kick.com` / `web.kick.com` and its real-time server, Steam at `steamcommunity.com`); emote lists and images from Twitch, BetterTTV, FrankerFaceZ and 7TV (each can be turned off); `api.github.com` to check for a new version (can be turned off), and `github.com` to download it; and, for writing, the official Twitch and Kick login and chat APIs. Nothing else is sent.
 
 ### Building
 
@@ -134,6 +143,7 @@ Python et Tkinter uniquement, **sans aucune dépendance externe**.
 - **Lecture confortable** : remonter dans le chat met le défilement en pause, *Nouveaux messages* ramène en bas ; heure des messages, badges, taille du texte et longueur de l'historique réglables.
 - **Écriture** (Twitch et Kick) : <kbd>Tab</kbd> complète pseudos et emotes, <kbd>↑</kbd> rappelle tes derniers messages, clic droit sur un pseudo pour le mentionner.
 - **Regarder** : le bouton ▶ lance le stream avec [Streamlink](https://streamlink.github.io/).
+- **Mises à jour** : *Paramètres › Mises à jour* cherche une nouvelle version sur GitHub (au démarrage, ou avec *Vérifier*) et l'installe en un clic ; une option l'installe toute seule au démarrage.
 - **Interface** : thème clair, sombre ou automatique (suit Windows), en français, anglais, espagnol, allemand et italien.
 
 | Thème clair | Paramètres |
@@ -186,6 +196,14 @@ Des arguments ouvrent des chats directement : un lien de chaîne, ou `--open twi
 
 Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows (en clair sous Linux, dans ton dossier personnel). *Se déconnecter* les efface.
 
+### Mises à jour
+
+*Paramètres › Mises à jour* affiche la version installée et consulte la [dernière release](https://github.com/Bulls64/Streamlink-Chat/releases/latest) : automatiquement quelques secondes après le démarrage (*Vérifier les mises à jour au démarrage*, activé par défaut) ou avec le bouton *Vérifier*. Si une version plus récente existe, *Mettre à jour* télécharge l'exécutable, le contrôle et redémarre Streamlink Chat avec tes chats ouverts. Avec *Mises à jour automatiques* (désactivé par défaut), tout se fait seul au démarrage.
+
+- Le fichier doit être celui de la release de ce dépôt, avec la taille et l'empreinte SHA-256 publiées par GitHub, et ressembler à un exécutable Windows. Les redirections ne sont suivies que vers GitHub. Si l'exécutable actuel est signé, le nouveau doit l'être par le même éditeur.
+- L'ancien exécutable est renommé `.old` et supprimé au démarrage suivant ; en cas d'échec, il est remis en place. Un fichier nommé d'après sa version (`StreamlinkChat-0.1.0.exe`) prend le nouveau numéro.
+- L'installation automatique ne concerne que l'`.exe` Windows placé dans un dossier modifiable. Depuis les sources ou avec l'AppImage, *Mettre à jour* ouvre la page de la release.
+
 ### Clavier
 
 | Action | Touches |
@@ -208,7 +226,7 @@ Les fichiers sont rangés à côté de `slink_chat.py` ou du `.exe` ; si ce doss
 
 ### Réseau et vie privée
 
-Streamlink Chat ne se connecte qu'aux chats eux-mêmes (IRC Twitch, Kick via `kick.com` / `web.kick.com` et son serveur temps réel, Steam via `steamcommunity.com`), aux listes et images d'emotes de Twitch, BetterTTV, FrankerFaceZ et 7TV (chacun désactivable), et, pour écrire, aux API officielles de connexion et de chat de Twitch et Kick. Rien d'autre n'est envoyé.
+Streamlink Chat ne se connecte qu'aux chats eux-mêmes (IRC Twitch, Kick via `kick.com` / `web.kick.com` et son serveur temps réel, Steam via `steamcommunity.com`), aux listes et images d'emotes de Twitch, BetterTTV, FrankerFaceZ et 7TV (chacun désactivable), à `api.github.com` pour chercher une nouvelle version (désactivable) et à `github.com` pour la télécharger, et, pour écrire, aux API officielles de connexion et de chat de Twitch et Kick. Rien d'autre n'est envoyé.
 
 ### Compilation
 

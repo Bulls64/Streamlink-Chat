@@ -20,6 +20,8 @@ DEFAULT_CONFIG = {
     "theme": "auto",           # auto (suit Windows), light, dark
     "quality": "best",         # qualité demandée à Streamlink par le bouton ▶
     "streamlink_path": "",     # vide : détecté automatiquement
+    "update_check": True,      # cherche une nouvelle version au démarrage
+    "auto_update": False,      # et l'installe sans demander (exécutable Windows seulement)
     "tabs": [],                # [{"platform": "twitch", "channel": "eslcs"}]
     "selected": 0,
     "geometry": "",
@@ -128,3 +130,23 @@ def channel_url(platform, channel):
     return {"twitch": "https://www.twitch.tv/{}", "kick": "https://kick.com/{}",
             "steamtv": "https://steamcommunity.com/broadcast/watch/{}" if channel.isdigit() else
             "https://steam.tv/{}"}[platform].format(channel)
+
+
+def targets_from_argv(argv):
+    """--open twitch:eslcs --open kick:xqc, ou des liens en arguments."""
+    out = []
+    args = list(argv)
+    while args:
+        a = args.pop(0)
+        if a == "--open" and args:
+            a = args.pop(0)
+        elif a in ("--wait-pid", "--updated-from"):
+            if args:
+                args.pop(0)  # valeur de l'option, pas une chaîne
+            continue
+        elif a.startswith("--"):
+            continue
+        target = parse_target(a)
+        if target:
+            out.append(target)
+    return out
