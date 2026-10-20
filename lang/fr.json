@@ -114,5 +114,7 @@
   "title_confirm": "Confirmer",
   "size_mb": "{size} Mo",
   "decimal_sep": ",",
-  "chat_section_updates": "Mises à jour"
+  "chat_section_updates": "Mises à jour",
+  "chat_label_platform_colors": "Couleurs par plateforme",
+  "chat_hint_platform_colors": "Teinte le chat et ses onglets de la couleur de leur plateforme (violet Twitch, vert Kick, bleu nuit Steam TV)."
 }

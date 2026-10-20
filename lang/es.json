@@ -114,5 +114,7 @@
   "title_confirm": "Confirmar",
   "size_mb": "{size} MB",
   "decimal_sep": ",",
-  "chat_section_updates": "Actualizaciones"
+  "chat_section_updates": "Actualizaciones",
+  "chat_label_platform_colors": "Colores por plataforma",
+  "chat_hint_platform_colors": "Tiñe el chat y sus pestañas con el color de su plataforma (morado Twitch, verde Kick, azul marino Steam TV)."
 }
