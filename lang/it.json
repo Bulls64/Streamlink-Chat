@@ -114,5 +114,7 @@
   "title_confirm": "Conferma",
   "size_mb": "{size} MB",
   "decimal_sep": ",",
-  "chat_section_updates": "Aggiornamenti"
+  "chat_section_updates": "Aggiornamenti",
+  "chat_label_platform_colors": "Colori per piattaforma",
+  "chat_hint_platform_colors": "Colora la chat e le sue schede con il colore della piattaforma (viola Twitch, verde Kick, blu notte Steam TV)."
 }

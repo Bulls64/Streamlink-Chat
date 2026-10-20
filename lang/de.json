@@ -114,5 +114,7 @@
   "title_confirm": "Bestätigen",
   "size_mb": "{size} MB",
   "decimal_sep": ",",
-  "chat_section_updates": "Updates"
+  "chat_section_updates": "Updates",
+  "chat_label_platform_colors": "Plattformfarben",
+  "chat_hint_platform_colors": "Färbt den Chat und seine Tabs in der Farbe ihrer Plattform (Twitch-Lila, Kick-Grün, Steam-TV-Nachtblau)."
 }

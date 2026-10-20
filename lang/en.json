@@ -114,5 +114,7 @@
   "title_confirm": "Confirm",
   "size_mb": "{size} MB",
   "decimal_sep": ".",
-  "chat_section_updates": "Updates"
+  "chat_section_updates": "Updates",
+  "chat_label_platform_colors": "Platform colors",
+  "chat_hint_platform_colors": "Tints the chat and its tabs with their platform's color (Twitch purple, Kick green, Steam TV navy)."
 }

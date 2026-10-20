@@ -11,7 +11,7 @@ CACHE_DIR = core.DATA_ROOT / "cache" / "emotes"
 PLATFORMS = {  # identifiant -> (nom, couleur, couleur du texte posé dessus)
     "twitch": ("Twitch", "#9146FF", "#FFFFFF"),
     "kick": ("Kick", "#53FC18", "#000000"),
-    "steamtv": ("Steam TV", "#66C0F4", "#0B1A26"),
+    "steamtv": ("Steam TV", "#2A475E", "#C7D5E0"),   # bleu nuit de Steam
 }
 NEUTRAL = ("#6B7280", "#FFFFFF")
 
@@ -29,6 +29,7 @@ DEFAULT_CONFIG = {
     "font_size": 14,
     "timestamps": True,
     "badges": True,
+    "platform_colors": True,   # carte et onglets teintés de la couleur de la plateforme
     "animated": True,
     "providers": ["bttv", "ffz", "7tv"],
     "highlights": [],          # mots qui mettent un message en évidence (en plus de son propre pseudo)

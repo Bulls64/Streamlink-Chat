@@ -77,6 +77,12 @@ class TestGuiSmoke(unittest.TestCase):
         view = self.app.current.view
         self.assertIn("Ann: salut @tous", view.text.get("1.0", "end"))
         self.assertEqual(self.app.current.status, "connected")
+        fill, _ = self.app.card_colors("twitch")
+        self.assertNotEqual(fill, self.app.c.surface)
+        self.assertEqual(view.bg, fill)
+        self.app.cfg["platform_colors"] = False
+        self.assertEqual(self.app.card_colors("twitch")[0], self.app.c.surface)
+        self.app.cfg["platform_colors"] = True
         self.app.open_settings()
         self.app.update()
         self.assertEqual(self.app.panel_kind, "settings")

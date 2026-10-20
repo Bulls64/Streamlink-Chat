@@ -124,6 +124,8 @@ class ChannelTab(Widget):
         else:
             fill = c.hover(bg) if self.hover else bg
             border = c.warn if t.mentioned else (c.border_strong if self.hover else c.border)
+            if not t.mentioned and self.app.cfg["platform_colors"]:
+                border = mix(border, color, 0.65 if self.hover else 0.45)
             self.P.round_rect(self, 0, 0, w, h, r, fill, border, bg)
             fg, dot = (c.text if t.unread or self.hover else c.muted), color
             if t.status in ("error", "reconnecting"):
@@ -151,7 +153,7 @@ class ChatView:
     def __init__(self, app, parent, tab):
         self.app, self.tab = app, tab
         c, px = app.c, app.px
-        bg = c.surface
+        self.bg = bg = app.card_colors(tab.platform)[0]
         self.frame = tk.Frame(parent, bg=bg)
         self.text = tk.Text(self.frame, bg=bg, fg=c.text, font=app.chat_font, wrap="word", bd=0, highlightthickness=0,
                             padx=px(14), pady=px(10), spacing1=px(3), spacing3=px(3), cursor="arrow",
@@ -176,7 +178,7 @@ class ChatView:
     # --- apparence
     def _setup_tags(self):
         app, c = self.app, self.app.c
-        t, bg = self.text, c.surface
+        t, bg = self.text, self.bg
         t.tag_configure("time", foreground=c.faint, font=app.chat_small)
         t.tag_configure("name", font=app.chat_bold)
         t.tag_configure("mention", font=app.chat_bold)
@@ -265,7 +267,7 @@ class ChatView:
                     t.tag_add(app.badge_label_tag(label), idx)
                 if msg.badges:
                     t.insert("end", " ")
-            color = readable_color(msg.color or default_color(msg.user or msg.display_name), app.c.surface) \
+            color = readable_color(msg.color or default_color(msg.user or msg.display_name), self.bg) \
                 or app.c.text
             ctag = self.color_tag(color)
             name = msg.display_name
@@ -607,6 +609,9 @@ class ChatApp(tk.Tk):
         self.card_inner = inner
         self.header = tk.Frame(inner, bg=c.surface)
         self.header.pack(fill="x", padx=(px(14), px(8)), pady=(px(8), 0))
+        self.platform_dot = tk.Canvas(self.header, width=px(10), height=px(10), bg=c.surface, highlightthickness=0,
+                                      bd=0)
+        self.platform_dot.pack(side="left", padx=(0, px(8)))
         self.header_title = tk.Label(self.header, text="", font=f.card_title, bg=c.surface, fg=c.text)
         self.header_title.pack(side="left")
         self.header_status = tk.Label(self.header, text="", font=f.tiny, bg=c.surface, fg=c.muted)
@@ -640,8 +645,36 @@ class ChatApp(tk.Tk):
         cv.delete("all")
         w, h = cv.winfo_width(), cv.winfo_height()
         if w > 2 and h > 2:
-            self.painter.round_rect(cv, 0, 0, w, h, px(12), c.surface, c.border, c.bg)
+            fill, border = self.card_colors(self.current.platform if self.current else None)
+            self.painter.round_rect(cv, 0, 0, w, h, px(12), fill, border, c.bg)
             self.card_inner.pack_configure(padx=px(4), pady=px(4))
+
+    def card_colors(self, platform):
+        """(fond, bordure) de la carte du chat : teintés de la couleur de la plateforme (réglage), comme les
+        cartes de favoris de Streamlink Launcher."""
+        c = self.c
+        if not platform or not self.cfg["platform_colors"]:
+            return c.surface, c.border
+        color = config.PLATFORMS[platform][1]
+        return mix(c.surface, color, 0.07 if c.dark else 0.05), mix(c.border, color, 0.6)
+
+    def _paint_card(self):
+        """Couleurs de la carte pour le chat affiché (en-tête, séparateur, zone des messages)."""
+        platform = self.current.platform if self.current else None
+        fill, border = self.card_colors(platform)
+        for w in (self.card_inner, self.header, self.header_title, self.header_status, self.header_btns,
+                  self.views_box, self.empty):
+            w.configure(bg=fill)
+        for b in self.header_btns.winfo_children():
+            b.configure(bg=fill)
+            b.redraw()
+        self.header_sep.configure(bg=border)
+        self.platform_dot.configure(bg=fill)
+        self.platform_dot.delete("all")
+        if platform:
+            d = self.px(10)
+            self.painter.circle(self.platform_dot, d / 2, d / 2, d, config.PLATFORMS[platform][1], bg=fill)
+        self._draw_card()
 
     # --- onglets
     def build_tabs(self):
@@ -793,6 +826,7 @@ class ChatApp(tk.Tk):
         for w in (self.add_field, self.input):
             w.set_accent(accent)
         self.send_btn.set_accent(accent)
+        self._paint_card()
         if not tab:
             self.header.pack_forget()
             self.header_sep.pack_forget()
@@ -1405,6 +1439,8 @@ class ChatApp(tk.Tk):
             self._switch_row(sec, t("chat_label_timestamps"), None, s["timestamps"],
                              lambda v: s.update(timestamps=v))
             self._switch_row(sec, t("chat_label_badges"), None, s["badges"], lambda v: s.update(badges=v))
+            self._switch_row(sec, t("chat_label_platform_colors"), t("chat_hint_platform_colors"),
+                             s["platform_colors"], lambda v: s.update(platform_colors=v))
             self._switch_row(sec, t("chat_label_animated"), None, s["animated"], lambda v: s.update(animated=v))
 
             sec = self._section(b, t("chat_section_emotes"))
@@ -1680,7 +1716,8 @@ class ChatApp(tk.Tk):
         hl = s.pop("_highlights_var", None)
         if hl is not None:
             s["highlights"] = [w.strip() for w in hl.get().split(",") if w.strip()][:30]
-        rebuild = any(s[k] != self.cfg[k] for k in ("language", "theme", "font_size", "timestamps", "badges"))
+        rebuild = any(s[k] != self.cfg[k] for k in ("language", "theme", "font_size", "timestamps", "badges",
+                                                       "platform_colors"))
         providers_changed = sorted(s["providers"]) != sorted(self.cfg["providers"])
         self.cfg.update({k: v for k, v in s.items() if k in self.cfg})
         config.save(self.cfg)

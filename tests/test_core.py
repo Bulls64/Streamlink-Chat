@@ -62,6 +62,12 @@ class TestFiles(unittest.TestCase):
         with mock.patch.object(config, "CONFIG_FILE", d / "chat.json"):
             cfg = config.load()
         self.assertEqual((cfg["theme"], cfg["quality"]), ("auto", "best"))
+        self.assertTrue(cfg["platform_colors"])
+
+    def test_platform_colors(self):
+        self.assertEqual(config.PLATFORMS["twitch"][1], "#9146FF")
+        self.assertEqual(config.PLATFORMS["kick"][1], "#53FC18")
+        self.assertEqual(config.PLATFORMS["steamtv"][1], "#2A475E")
 
 
 class TestStreamlink(unittest.TestCase):
