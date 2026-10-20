@@ -1,6 +1,10 @@
 """Tests de Streamlink Chat (chat/) : analyse des protocoles et connexions complètes contre de faux serveurs locaux.
 
 Aucun accès à Internet : Twitch (IRC sur WebSocket), Kick (Centrifugo) et Steam (HTTP) sont imités ici.
+
+Tests of Streamlink Chat (chat/): protocol parsing and full connections against local fake servers.
+
+No Internet access: Twitch (IRC over WebSocket), Kick (Centrifugo) and Steam (HTTP) are imitated here.
 """
 import base64
 import hashlib
@@ -26,9 +30,12 @@ from chat import auth, badges, common, config, emotes, instance, kick, steam, tw
 
 # ---------------------
 # Faux serveur WebSocket
+# Fake WebSocket server
 # ---------------------
 class FakeWSServer:
-    """Serveur WebSocket minimal : handler(conn) reçoit un objet avec send(text), recv() -> texte ou None."""
+    """Serveur WebSocket minimal : handler(conn) reçoit un objet avec send(text), recv() -> texte ou None.
+
+    Minimal WebSocket server: handler(conn) receives an object with send(text), recv() -> text or None."""
 
     def __init__(self, handler):
         self.handler = handler
@@ -139,12 +146,16 @@ class TestWebSocket(unittest.TestCase):
         def handler(c):
             msg = c.recv()
             c.send(b"", opcode=0x9)                     # ping : le client doit répondre seul
+                                                        # ping: the client must answer by itself
             c.send("éch", opcode=1, fin=False)            # message fragmenté
+                                                          # fragmented message
             c.send("o:" + msg, opcode=0, fin=True)
             c.send("x" * 70000)                          # longueur sur 8 octets
+                                                         # length on 8 bytes
             time.sleep(0.2)
             c.send(struct.pack("!H", 1000) + b"bye", opcode=0x8)
             c.recv()  # attend la fermeture du client (sinon Windows peut couper la connexion avant)
+                      # waits for the client to close (otherwise Windows may cut the connection first)
         srv = FakeWSServer(handler)
         client = ws.WebSocket(srv.url).connect()
         client.send("bonjour")
@@ -159,6 +170,7 @@ class TestWebSocket(unittest.TestCase):
         def handler(c):
             frame = bytes([0x81, 5]) + b"hello"
             c.sock.sendall(frame[:3])          # trame coupée en deux, avec une pause
+                                               # frame cut in two, with a pause
             time.sleep(0.6)
             c.sock.sendall(frame[3:])
             c.send("next")
@@ -278,6 +290,7 @@ class TestTwitchParsing(unittest.TestCase):
         self.assertTrue(any(r.startswith("NICK justinfan") for r in received))
         self.assertIn("CAP REQ :twitch.tv/tags twitch.tv/commands", received)
         self.assertFalse(conn.can_send)  # anonyme
+                                         # anonymous
         conn.stop()
         srv.close()
 
@@ -472,6 +485,7 @@ class TestSteam(unittest.TestCase):
 
 # ---------------------
 # Commun, réglages, emotes, comptes
+# Common, settings, emotes, accounts
 # ---------------------
 class TestCommon(unittest.TestCase):
     def test_split_words(self):
@@ -563,6 +577,7 @@ class TestEmotes(unittest.TestCase):
         loader.request("https://e/1", lambda u, data: done.put(data))
         self.assertEqual(done.get(timeout=5), png)
         self.assertEqual(len(calls), 1)  # deuxième fois : cache disque
+                                         # second time: disk cache
         loader.shutdown()
 
 

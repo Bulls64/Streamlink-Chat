@@ -1,4 +1,6 @@
-"""Streamlink Chat : les chats Twitch, Kick et Steam TV dans une fenêtre, dans le style de Streamlink Launcher."""
+"""Streamlink Chat : les chats Twitch, Kick et Steam TV dans une fenêtre, dans le style de Streamlink Launcher.
+
+Streamlink Chat: Twitch, Kick and Steam TV chats in one window, in the style of Streamlink Launcher."""
 import base64
 import hashlib
 import logging
@@ -18,7 +20,10 @@ from tkinter import messagebox
 
 from . import __version__, auth, badges, config, core, emotes, instance, updater
 from .common import default_color, mentions, readable_color
-from .config import targets_from_argv  # réexporté pour slink_chat.py
+
+# réexporté pour slink_chat.py
+# re-exported for slink_chat.py
+from .config import targets_from_argv
 from .kick import KickManager
 from .steam import SteamManager
 from .twitch import TwitchConnection
@@ -63,6 +68,7 @@ class Tab:
         self.view = None
         self.history = deque(maxlen=1000)
         self.chatters = {}          # pseudo en minuscules -> pseudo affiché (complétion avec Tab)
+                                    # lowercase username -> displayed username (completion with Tab)
 
     @property
     def key(self):
@@ -71,9 +77,12 @@ class Tab:
 
 # =====================================================
 # Composants
+# Components
 # =====================================================
 class ChannelTab(Widget):
-    """Onglet d'un chat : pastille de plateforme, nom, compteur de messages non lus, croix au survol."""
+    """Onglet d'un chat : pastille de plateforme, nom, compteur de messages non lus, croix au survol.
+
+    Tab of a chat: platform dot, name, unread message counter, cross on hover."""
 
     zone_cursor = True
 
@@ -148,7 +157,9 @@ class ChannelTab(Widget):
 
 
 class ChatView:
-    """Un tk.Text par onglet : lignes de messages, badges, emotes en images, liens, mentions."""
+    """Un tk.Text par onglet : lignes de messages, badges, emotes en images, liens, mentions.
+
+    One tk.Text per tab: message lines, badges, emotes as images, links, mentions."""
 
     def __init__(self, app, parent, tab):
         self.app, self.tab = app, tab
@@ -168,14 +179,17 @@ class ChatView:
         self.text.bind("<Button-3>", self._context)
         self.text.bind("<Button-1>", lambda e: self.text.focus_set(), add="+")
         self.first_n = 1          # numéro du message affiché sur la ligne 1
+                                  # number of the message shown on line 1
         self.next_n = 1
         self.lines = deque()      # messages affichés, dans l'ordre des lignes
+                                  # displayed messages, in line order
         self.by_id = {}
         self.by_user = {}
         self.at_bottom = True
         self._setup_tags()
 
     # --- apparence
+    # --- appearance
     def _setup_tags(self):
         app, c = self.app, self.app.c
         t, bg = self.text, self.bg
@@ -212,6 +226,7 @@ class ChatView:
         return tag
 
     # --- défilement
+    # --- scrolling
     def _yscroll(self, first, last):
         self.bar.set(first, last)
         self.at_bottom = float(last) >= 0.999
@@ -222,6 +237,7 @@ class ChatView:
         self.at_bottom = True
         self.app.update_more_button(self)
 
+    # --- messages
     # --- messages
     def add(self, messages):
         t = self.text
@@ -273,6 +289,7 @@ class ChatView:
             name = msg.display_name
             if msg.user and not msg.display_name.isascii() and msg.platform == "twitch":
                 name = f"{msg.display_name} ({msg.user})"  # pseudo affiché dans une autre écriture
+                                                           # display name in another script
             t.insert("end", name, ("name", ctag), " " if msg.kind == "action" else ": ", ())
             if msg.kind == "action":
                 base = (ctag,)
@@ -316,8 +333,10 @@ class ChatView:
         if img:
             t.image_create("end", image=img, padx=1, align="center")
         elif img is None:  # en cours de chargement
+                           # loading
             t.insert("end", name, (app.emote_tag(url), "emote_text") + base)
         else:  # image illisible : le nom reste en texte
+               # unreadable image: the name stays as text
             t.insert("end", name, base)
 
     def image_ready(self, url, img):
@@ -333,6 +352,7 @@ class ChatView:
                     self.text.delete(a, b)
                     self.text.image_create(a, image=img, padx=1, align="center")
                 else:  # illisible : le nom reste, en texte normal
+                       # unreadable: the name stays, as normal text
                     self.text.tag_remove(tag, a, b)
                     self.text.tag_remove("emote_text", a, b)
         finally:
@@ -363,6 +383,7 @@ class ChatView:
                 msg.deleted = True
                 self.text.tag_add("deleted", f"{i + 1}.0", f"{i + 1}.end")
 
+    # --- interactions
     # --- interactions
     def _message_at(self, e):
         idx = self.text.index(f"@{e.x},{e.y}")
@@ -423,8 +444,10 @@ class ChatApp(tk.Tk):
         self.channel_emotes = {}
         self.emote_maps = {}
         self.images = {}            # url -> PhotoImage, False (illisible) ; absent = pas encore demandé
+                                    # url -> PhotoImage, False (unreadable); missing = not requested yet
         self.emote_names = {}
         self.anims = {}             # url -> [image affichée, [(image, délai)], index, prochain changement]
+                                    # url -> [displayed image, [(image, delay)], index, next change]
         self.badge_images, self.badge_tags, self.badge_labels = {}, {}, {}
         self.loader = emotes.ImageLoader(config.CACHE_DIR)
         self.conns = {}
@@ -437,6 +460,7 @@ class ChatApp(tk.Tk):
             self.iconphoto(True, *self._icons)
             if os.name == "nt":
                 self.iconbitmap(default=str(ASSETS / "app.ico"))  # icône nette dans la barre des tâches
+                                                                  # sharp icon in the taskbar
         except tk.TclError:
             pass
         self.minsize(self.px(380), self.px(460))
@@ -448,6 +472,7 @@ class ChatApp(tk.Tk):
         self.bind("<Control-w>", lambda e: self.close_tab(self.current) if self.current else None)
         self.bind("<Control-Tab>", lambda e: self.cycle_tab(1))
         for seq in ("<Control-Shift-Tab>", "<Control-ISO_Left_Tab>"):  # ISO_Left_Tab : X11 seulement
+                                                                       # ISO_Left_Tab: X11 only
             try:
                 self.bind(seq, lambda e: self.cycle_tab(-1))
             except tk.TclError:
@@ -466,11 +491,13 @@ class ChatApp(tk.Tk):
         self.after(300, self._check_accounts)
         instance.serve(lambda targets: self.events.put(("open", targets)))
         # Mise à jour de l'application (releases GitHub)
+        # Application update (GitHub releases)
         self.app_update = None
         self._app_state, self._app_error, self._app_dl = "idle", None, (0, 0)
         self._app_cancel = threading.Event()
         self._updated_from = updater.arg_value("--updated-from")
         if core.FROZEN:  # restes d'une mise à jour précédente (ancien exécutable, téléchargement interrompu)
+                         # leftovers of a previous update (old executable, interrupted download)
             threading.Thread(target=updater.cleanup_leftovers, daemon=True).start()
         if self._updated_from:
             self.after(900, lambda: self.toast(self.t("toast_updated", old=self._updated_from, new=__version__),
@@ -479,6 +506,7 @@ class ChatApp(tk.Tk):
             self.after(5000, lambda: self.check_app_update(manual=False))
 
     # --- outils
+    # --- tools
     def px(self, v):
         return int(round(v * self.scale))
 
@@ -582,6 +610,7 @@ class ChatApp(tk.Tk):
         self.tabs_row.bind("<Configure>", lambda e: self._flow_tabs())
 
         # Saisie
+        # Input
         bottom = tk.Frame(content, bg=c.bg)
         bottom.pack(side="bottom", fill="x", pady=(px(12), 0))
         self.send_btn = Button(bottom, self, icon="send", command=self.send, kind="primary", height=44, width=44,
@@ -599,6 +628,7 @@ class ChatApp(tk.Tk):
         e.bind("<Key>", self._reset_complete, add="+")
         self.input.cv.bind("<ButtonRelease-1>", self._input_click, add="+")
         # Carte du chat
+        # Chat card
         self.card = tk.Frame(content, bg=c.bg)
         self.card.pack(fill="both", expand=True, pady=(px(12), 0))
         self.card_cv = tk.Canvas(self.card, bg=c.bg, highlightthickness=0, bd=0)
@@ -651,7 +681,10 @@ class ChatApp(tk.Tk):
 
     def card_colors(self, platform):
         """(fond, bordure) de la carte du chat : teintés de la couleur de la plateforme (réglage), comme les
-        cartes de favoris de Streamlink Launcher."""
+        cartes de favoris de Streamlink Launcher.
+
+        (background, border) of the chat card: tinted with the platform's color (setting), like the
+        favorite cards of Streamlink Launcher."""
         c = self.c
         if not platform or not self.cfg["platform_colors"]:
             return c.surface, c.border
@@ -659,7 +692,9 @@ class ChatApp(tk.Tk):
         return mix(c.surface, color, 0.07 if c.dark else 0.05), mix(c.border, color, 0.6)
 
     def _paint_card(self):
-        """Couleurs de la carte pour le chat affiché (en-tête, séparateur, zone des messages)."""
+        """Couleurs de la carte pour le chat affiché (en-tête, séparateur, zone des messages).
+
+        Card colors for the displayed chat (header, separator, message area)."""
         platform = self.current.platform if self.current else None
         fill, border = self.card_colors(platform)
         for w in (self.card_inner, self.header, self.header_title, self.header_status, self.header_btns,
@@ -677,6 +712,7 @@ class ChatApp(tk.Tk):
         self._draw_card()
 
     # --- onglets
+    # --- tabs
     def build_tabs(self):
         for w in self.tabs_row.winfo_children():
             w.destroy()
@@ -820,6 +856,7 @@ class ChatApp(tk.Tk):
         return "break"
 
     # --- vue du chat courant
+    # --- view of the current chat
     def refresh_current(self):
         tab = self.current
         accent = self.accent
@@ -915,6 +952,7 @@ class ChatApp(tk.Tk):
 
     # =====================================================
     # Connexions et événements
+    # Connections and events
     # =====================================================
     def _connection(self, platform):
         conn = self.conns.get(platform)
@@ -965,6 +1003,7 @@ class ChatApp(tk.Tk):
                 if kind == "message":
                     msg = ev[1]
                     if msg.channel == "*":  # avis général de Twitch : chat courant
+                                            # general notice from Twitch: current chat
                         if self.current and self.current.platform == msg.platform:
                             msg.channel = self.current.channel
                         else:
@@ -1047,7 +1086,9 @@ class ChatApp(tk.Tk):
             batches.setdefault(tab.key, (tab, []))[1].append(msg)
 
     def _flush(self, tab, batches):
-        """Affiche les messages en attente avant une suppression qui pourrait les viser."""
+        """Affiche les messages en attente avant une suppression qui pourrait les viser.
+
+        Shows the pending messages before a deletion that could target them."""
         pending = batches.pop(tab.key, None)
         if pending and tab.view:
             tab.view.add(pending[1])
@@ -1063,6 +1104,7 @@ class ChatApp(tk.Tk):
 
     # =====================================================
     # Badges et infobulles
+    # Badges and tooltips
     # =====================================================
     def badge_image(self, kind, platform):
         size = self.px(18)
@@ -1101,7 +1143,9 @@ class ChatApp(tk.Tk):
         return "em_" + hashlib.md5(url.encode()).hexdigest()[:12]
 
     def emote_image(self, url):
-        """PhotoImage si prête, None si en cours de chargement, False si illisible."""
+        """PhotoImage si prête, None si en cours de chargement, False si illisible.
+
+        PhotoImage if ready, None if loading, False if unreadable."""
         if url in self.images:
             return self.images[url]
         self.images[url] = None
@@ -1112,6 +1156,7 @@ class ChatApp(tk.Tk):
         url, data = payload
         if self.images.get(url):
             return  # déjà chargée (deux demandes simultanées)
+                    # already loaded (two simultaneous requests)
         img = False
         if data:
             try:
@@ -1181,6 +1226,7 @@ class ChatApp(tk.Tk):
 
     # =====================================================
     # Envoi
+    # Sending
     # =====================================================
     def send(self):
         tab = self.current
@@ -1306,6 +1352,7 @@ class ChatApp(tk.Tk):
 
     # =====================================================
     # Regarder / ouvrir
+    # Watch / open
     # =====================================================
     def open_in_browser(self, tab=None):
         tab = tab or self.current
@@ -1313,7 +1360,9 @@ class ChatApp(tk.Tk):
             self.open_url(config.channel_url(tab.platform, tab.channel))
 
     def watch(self, tab=None):
-        """Lance le stream avec Streamlink (lecteur réglé dans la configuration de Streamlink)."""
+        """Lance le stream avec Streamlink (lecteur réglé dans la configuration de Streamlink).
+
+        Starts the stream with Streamlink (player set in Streamlink's configuration)."""
         tab = tab or self.current
         if not tab:
             return
@@ -1335,6 +1384,7 @@ class ChatApp(tk.Tk):
 
     # =====================================================
     # Paramètres
+    # Settings
     # =====================================================
     def open_panel(self, kind, title, body_builder, footer_builder=None):
         self.close_panel()
@@ -1500,6 +1550,7 @@ class ChatApp(tk.Tk):
 
     # =====================================================
     # Mise à jour de l'application (releases GitHub)
+    # Application update (GitHub releases)
     # =====================================================
     def format_size(self, nbytes):
         return self.t("size_mb", size=f"{max(0, nbytes) / 1048576:.1f}".replace(".", self.t("decimal_sep")))
@@ -1554,7 +1605,9 @@ class ChatApp(tk.Tk):
         self.open_url(rel["page"] if rel else updater.REPO_URL + "/releases")
 
     def check_app_update(self, manual=False):
-        """Cherche une release plus récente sur GitHub (hors de l'interface)."""
+        """Cherche une release plus récente sur GitHub (hors de l'interface).
+
+        Looks for a newer release on GitHub (outside the interface)."""
         if self._app_state in ("checking", "downloading", "verifying", "restart"):
             return
         self._app_state, self._app_error = "checking", None
@@ -1595,7 +1648,10 @@ class ChatApp(tk.Tk):
 
     def install_app_update(self, auto=False):
         """Télécharge la release, la contrôle, remplace l'exécutable et redémarre. Sans exécutable remplaçable
-        (lancé depuis les sources, AppImage, dossier protégé…), ouvre la page de la release."""
+        (lancé depuis les sources, AppImage, dossier protégé…), ouvre la page de la release.
+
+        Downloads the release, checks it, replaces the executable and restarts. Without a replaceable executable
+        (started from the sources, AppImage, protected folder…), opens the release page."""
         t = self.t
         rel = (self.app_update or {}).get("release")
         if not rel:
@@ -1739,6 +1795,7 @@ class ChatApp(tk.Tk):
         self.toast(self.t("toast_settings_saved"))
 
     # --- comptes
+    # --- accounts
     def login(self, platform, client_id, secret=""):
         t = self.t
         if not client_id or (platform == "kick" and not secret):
@@ -1817,7 +1874,9 @@ class ChatApp(tk.Tk):
             self.open_settings(section="accounts")
 
     def _check_accounts(self):
-        """Au démarrage : vérifie / renouvelle les jetons enregistrés (hors de l'interface)."""
+        """Au démarrage : vérifie / renouvelle les jetons enregistrés (hors de l'interface).
+
+        At start-up: checks / renews the saved tokens (outside the interface)."""
         tw = self.cfg["accounts"].get("twitch") or {}
         if tw.get("access_token"):
             self.run_in_thread(lambda: auth.twitch_ensure(tw), lambda r: self._account_checked("twitch", tw, r))
@@ -1828,6 +1887,7 @@ class ChatApp(tk.Tk):
     def _account_checked(self, platform, old, result):
         if isinstance(result, Exception):
             return  # réseau indisponible : on garde le jeton, la connexion le dira
+                    # network unavailable: the token is kept, the connection will tell
         if result is None:
             self.cfg["accounts"][platform] = {k: v for k, v in old.items() if k in ("client_id", "client_secret")}
             self.toast(self.t("chat_auth_failed", platform=self.platform_name(platform)), "warn")
@@ -1840,6 +1900,7 @@ class ChatApp(tk.Tk):
 
     # =====================================================
     # Fermeture
+    # Closing
     # =====================================================
     def on_close(self, relaunching=False):
         if self._app_state in ("downloading", "verifying") and not relaunching:
@@ -1860,10 +1921,12 @@ class ChatApp(tk.Tk):
 def main(targets=()):
     core.setup_logging()
     waited = updater.arg_value("--wait-pid")  # relance après une mise à jour : on attend la fin de l'ancienne
+                                              # restart after an update: wait for the old one to end
     if waited and waited.isdigit():
         updater.wait_for_pid(int(waited), 20)
     if instance.forward(targets):
         return  # déjà ouvert : la fenêtre existante ouvre ces chats
+                # already open: the existing window opens these chats
     enable_dpi_awareness()
     set_app_id("Bulls64.StreamlinkChat")
     ChatApp(targets).mainloop()

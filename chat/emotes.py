@@ -1,6 +1,10 @@
 """Emotes tierces (BetterTTV, FrankerFaceZ, 7TV) et chargement des images (PNG / GIF, animées comprises).
 
 Tk ne lit ni le WebP ni l'AVIF : on ne demande que des PNG et des GIF ; une emote sans ces formats reste du texte.
+
+Third-party emotes (BetterTTV, FrankerFaceZ, 7TV) and image loading (PNG / GIF, animated ones included).
+
+Tk reads neither WebP nor AVIF: only PNG and GIF are requested; an emote without these formats stays as text.
 """
 import base64
 import hashlib
@@ -25,6 +29,7 @@ STV_USER = "https://7tv.io/v3/users/{platform}/{id}"
 
 # ---------------------
 # Listes d'emotes
+# Emote lists
 # ---------------------
 def bttv_list(items):
     out = {}
@@ -83,7 +88,9 @@ def fetch_global(providers, get=http):
 
 
 def fetch_channel(platform, user_id, providers, get=http):
-    """Emotes d'une chaîne (Twitch : identifiant de la chaîne ; Kick : 7TV seulement)."""
+    """Emotes d'une chaîne (Twitch : identifiant de la chaîne ; Kick : 7TV seulement).
+
+    Emotes of a channel (Twitch: the channel's id; Kick: 7TV only)."""
     emotes = {}
     if platform == "twitch" and "ffz" in providers:
         try:
@@ -117,7 +124,9 @@ def image_kind(data):
 
 
 def gif_frames(data):
-    """Nombre d'images et délai de chacune (ms) d'un GIF, sans le décoder."""
+    """Nombre d'images et délai de chacune (ms) d'un GIF, sans le décoder.
+
+    Number of frames and delay of each one (ms) of a GIF, without decoding it."""
     delays, i = [], 13
     if len(data) < 13:
         return []
@@ -145,6 +154,7 @@ def gif_frames(data):
             if flags & 0x80:
                 j += 3 * (2 << (flags & 7))
             j += 1  # taille minimale LZW
+                    # LZW minimum code size
             while j < len(data) and data[j]:
                 j += data[j] + 1
             i = j + 1
@@ -154,7 +164,9 @@ def gif_frames(data):
 
 
 class ImageLoader:
-    """Télécharge les images d'emotes en arrière-plan (cache mémoire + disque) ; done(url, octets ou None)."""
+    """Télécharge les images d'emotes en arrière-plan (cache mémoire + disque) ; done(url, octets ou None).
+
+    Downloads emote images in the background (memory + disk cache); done(url, bytes or None)."""
 
     def __init__(self, cache_dir=None, get=http, workers=6):
         self.cache_dir = Path(cache_dir) if cache_dir else None

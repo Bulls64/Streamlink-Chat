@@ -1,4 +1,6 @@
-"""Éléments partagés par les plateformes : message de chat, découpage du texte, couleurs, requêtes HTTP."""
+"""Éléments partagés par les plateformes : message de chat, découpage du texte, couleurs, requêtes HTTP.
+
+Elements shared by the platforms: chat message, text splitting, colors, HTTP requests."""
 import gzip
 import hashlib
 import json
@@ -25,11 +27,17 @@ class ChatMessage:
 
     fragments : liste de tuples ("text", s) | ("emote", nom, url) | ("link", url) | ("mention", s)
     badges : liste de (identifiant, libellé) ; kind : msg, action (/me), system, notice, event (abonnement…)
+
+    One chat line, whatever the platform.
+
+    fragments: list of tuples ("text", s) | ("emote", name, url) | ("link", url) | ("mention", s)
+    badges: list of (id, label); kind: msg, action (/me), system, notice, event (subscription…)
     """
     platform: str
     channel: str
     text: str = ""
     user: str = ""                 # identifiant de connexion (minuscules)
+                                   # login name (lowercase)
     display_name: str = ""
     color: str = ""
     badges: list = field(default_factory=list)
@@ -39,17 +47,24 @@ class ChatMessage:
     user_id: str = ""
     ts: float = field(default_factory=time.time)
     reply_to: str = ""             # pseudo auquel le message répond
+                                   # username the message replies to
     first: bool = False            # premier message de cette personne dans ce chat
+                                   # first message of this person in this chat
     highlight: bool = False        # message mis en avant (points de chaîne, etc.)
+                                   # highlighted message (channel points, etc.)
     own: bool = False              # envoyé depuis cette application
+                                   # sent from this application
     deleted: bool = False
 
 
 # ---------------------
 # Découpage du texte
+# Text splitting
 # ---------------------
 def split_words(text, emotes=None, own_name=""):
-    """Texte -> fragments : emotes (dictionnaire nom -> url), liens, mentions @pseudo."""
+    """Texte -> fragments : emotes (dictionnaire nom -> url), liens, mentions @pseudo.
+
+    Text -> fragments: emotes (name -> url dictionary), links, @username mentions."""
     emotes = emotes or {}
     out = []
     buf = []
@@ -75,6 +90,7 @@ def split_words(text, emotes=None, own_name=""):
             out.append(("link", token[:end]))
             if token[end:]:
                 buf.append(token[end:])  # ponctuation après le lien
+                                         # punctuation after the link
         elif token.startswith("@") and len(token) > 1:
             flush()
             out.append(("mention", token))
@@ -85,7 +101,9 @@ def split_words(text, emotes=None, own_name=""):
 
 
 def mentions(fragments, names, words=()):
-    """Vrai si le message cite l'un des noms (avec ou sans @) ou l'un des mots surveillés."""
+    """Vrai si le message cite l'un des noms (avec ou sans @) ou l'un des mots surveillés.
+
+    True if the message mentions one of the names (with or without @) or one of the watched words."""
     names = {n.lower().lstrip("@") for n in names if n}
     words = [w.lower() for w in words if w]
     for frag in fragments:
@@ -102,8 +120,10 @@ def mentions(fragments, names, words=()):
 
 # ---------------------
 # Couleurs des pseudos
+# Username colors
 # ---------------------
 # Couleurs par défaut de Twitch, quand la personne n'en a pas choisi
+# Twitch's default colors, when the person has not chosen one
 DEFAULT_COLORS = ["#FF0000", "#0000FF", "#008000", "#B22222", "#FF7F50", "#9ACD32", "#FF4500", "#2E8B57",
                   "#DAA520", "#D2691E", "#5F9EA0", "#1E90FF", "#FF69B4", "#8A2BE2", "#00FF7F"]
 
@@ -133,7 +153,9 @@ def contrast(a, b):
 
 
 def readable_color(color, bg, minimum=4.0):
-    """Éclaircit ou assombrit la couleur d'un pseudo jusqu'à ce qu'elle se lise sur le fond (comme Chatterino)."""
+    """Éclaircit ou assombrit la couleur d'un pseudo jusqu'à ce qu'elle se lise sur le fond (comme Chatterino).
+
+    Lightens or darkens a username's color until it is readable on the background (like Chatterino)."""
     if not re.fullmatch(r"#[0-9a-fA-F]{6}", color or ""):
         return None
     target = "#FFFFFF" if _lum(_rgb(bg)) < 0.4 else "#000000"
@@ -158,7 +180,10 @@ class HttpError(Exception):
 
 def http(url, data=None, headers=None, method=None, timeout=12, form=None, opener=None, raw=False):
     """Requête HTTP(S) ; renvoie le JSON décodé (ou les octets si raw). data = objet JSON à envoyer,
-    form = dictionnaire encodé en application/x-www-form-urlencoded."""
+    form = dictionnaire encodé en application/x-www-form-urlencoded.
+
+    HTTP(S) request; returns the decoded JSON (or the bytes if raw). data = JSON object to send,
+    form = dictionary encoded as application/x-www-form-urlencoded."""
     h = {"User-Agent": USER_AGENT, "Accept": "application/json, text/plain, */*", "Accept-Encoding": "gzip, deflate"}
     h.update(headers or {})
     body = None
@@ -192,6 +217,7 @@ def http(url, data=None, headers=None, method=None, timeout=12, form=None, opene
 
 # ---------------------
 # Base des connexions
+# Connection base
 # ---------------------
 class Connection:
     """Connexion à une plateforme dans un fil d'exécution à part.
@@ -200,6 +226,13 @@ class Connection:
       ("message", ChatMessage) · ("status", platform, channel, état, détail) · ("delete", platform, channel, id)
       ("clear_user", platform, channel, user) · ("clear", platform, channel) · ("room", platform, channel, infos)
     états : connecting, connected (lecture seule ou non), reconnecting, error, closed
+
+    Connection to a platform in a separate thread.
+
+    Events go to the interface through emit(...) (a queue read by the Tk loop):
+      ("message", ChatMessage) · ("status", platform, channel, state, detail) · ("delete", platform, channel, id)
+      ("clear_user", platform, channel, user) · ("clear", platform, channel) · ("room", platform, channel, info)
+    states: connecting, connected (read-only or not), reconnecting, error, closed
     """
 
     platform = ""
@@ -227,6 +260,7 @@ class Connection:
             try:
                 self.run_once()
             except Exception as e:  # réseau, protocole : on retente plus tard
+                                    # network, protocol: try again later
                 log.info("Chat %s : %s", self.platform, e)
                 self.on_error(e)
             if self.stop_event.is_set():

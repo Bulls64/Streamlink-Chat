@@ -4,6 +4,13 @@ Twitch : « Device Code Flow » (aucune adresse de retour, aucun secret). Il fau
   enregistrée sur https://dev.twitch.tv/console (type « Public »).
 Kick : OAuth 2.1 avec PKCE et retour sur http://localhost:{port}/callback. Il faut une application Kick
   (https://kick.com/settings/developer) : identifiant + secret, et cette adresse de retour déclarée.
+
+Account sign-in, to write in the chats.
+
+Twitch: "Device Code Flow" (no redirect address, no secret). It needs the id of an application
+  registered on https://dev.twitch.tv/console ("Public" type).
+Kick: OAuth 2.1 with PKCE and redirect to http://localhost:{port}/callback. It needs a Kick application
+  (https://kick.com/settings/developer): id + secret, with this redirect address declared.
 """
 import base64
 import hashlib
@@ -48,7 +55,9 @@ def twitch_device_start(client_id, post=http):
 
 
 def twitch_device_poll(client_id, device, cancel, post=http, sleep=time.sleep):
-    """Attend que l'utilisateur valide le code ; -> {access_token, refresh_token, login, user_id}."""
+    """Attend que l'utilisateur valide le code ; -> {access_token, refresh_token, login, user_id}.
+
+    Waits for the user to confirm the code; -> {access_token, refresh_token, login, user_id}."""
     interval = max(1, int(device.get("interval") or 5))
     deadline = time.time() + int(device.get("expires_in") or 1800)
     while time.time() < deadline:
@@ -87,7 +96,9 @@ def twitch_refresh(client_id, refresh_token, post=http):
 
 
 def twitch_ensure(account, post=http):
-    """Vérifie le jeton enregistré ; le renouvelle si besoin. Renvoie le compte à jour, ou None."""
+    """Vérifie le jeton enregistré ; le renouvelle si besoin. Renvoie le compte à jour, ou None.
+
+    Checks the saved token; renews it if needed. Returns the updated account, or None."""
     if not account or not account.get("access_token"):
         return None
     try:
@@ -120,7 +131,9 @@ def kick_authorize_url(client_id, challenge, state):
 
 
 def wait_for_code(state, cancel, port=KICK_PORT, timeout=300, page=b""):
-    """Petit serveur local qui reçoit le retour d'autorisation ; -> code."""
+    """Petit serveur local qui reçoit le retour d'autorisation ; -> code.
+
+    Small local server that receives the authorization redirect; -> code."""
     result = {}
 
     class Handler(BaseHTTPRequestHandler):
@@ -168,7 +181,9 @@ def kick_user(token, get=http):
 
 
 def kick_login(client_id, client_secret, open_url, cancel, page=b"", post=http):
-    """Parcours complet (hors de l'interface) : ouvre le navigateur, attend le retour, échange le code."""
+    """Parcours complet (hors de l'interface) : ouvre le navigateur, attend le retour, échange le code.
+
+    Full flow (outside the interface): opens the browser, waits for the redirect, exchanges the code."""
     verifier, challenge = pkce_pair()
     state = secrets.token_urlsafe(16)
     ready = threading.Event()
@@ -192,6 +207,7 @@ def kick_login(client_id, client_secret, open_url, cancel, page=b"", post=http):
     try:
         user = kick_user(tok["access_token"], get=post)
     except Exception as e:  # le nom du compte n'est qu'informatif
+                            # the account name is only informative
         log.info("Kick : profil illisible (%s)", e)
     return {"access_token": tok["access_token"], "refresh_token": tok.get("refresh_token", ""),
             "expires_at": time.time() + int(tok.get("expires_in") or 3600),

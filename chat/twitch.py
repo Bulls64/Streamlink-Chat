@@ -1,4 +1,6 @@
-"""Chat Twitch : IRC sur WebSocket (wss://irc-ws.chat.twitch.tv). Lecture anonyme, écriture une fois connecté."""
+"""Chat Twitch : IRC sur WebSocket (wss://irc-ws.chat.twitch.tv). Lecture anonyme, écriture une fois connecté.
+
+Twitch chat: IRC over WebSocket (wss://irc-ws.chat.twitch.tv). Anonymous reading, writing once signed in."""
 import random
 import re
 import socket
@@ -13,6 +15,7 @@ EMOTE_URL = "https://static-cdn.jtvnw.net/emoticons/v2/{id}/default/{theme}/1.0"
 LOGIN_RE = re.compile(r"^[a-z0-9_]{1,25}$")
 
 BADGES = {  # identifiant Twitch -> (identifiant interne, libellé court)
+            # Twitch id -> (internal id, short label)
     "broadcaster": ("broadcaster", "Streamer"), "moderator": ("moderator", "Mod"), "vip": ("vip", "VIP"),
     "subscriber": ("subscriber", "Sub"), "founder": ("founder", "Fondateur"), "staff": ("staff", "Staff"),
     "partner": ("verified", "✓"), "turbo": ("turbo", "Turbo"), "premium": ("prime", "Prime"),
@@ -27,7 +30,9 @@ def unescape_tag(value):
 
 
 def parse_line(line):
-    """Ligne IRC -> (tags, préfixe, commande, paramètres). Le dernier paramètre (après ' :') est inclus."""
+    """Ligne IRC -> (tags, préfixe, commande, paramètres). Le dernier paramètre (après ' :') est inclus.
+
+    IRC line -> (tags, prefix, command, parameters). The last parameter (after ' :') is included."""
     tags, prefix = {}, ""
     if line.startswith("@"):
         raw, _, line = line[1:].partition(" ")
@@ -63,7 +68,9 @@ def parse_badges(value):
 
 
 def emote_fragments(text, emotes_tag, extra_emotes=None, theme="dark"):
-    """Découpe le texte selon le tag emotes (positions en caractères), puis les mots restants."""
+    """Découpe le texte selon le tag emotes (positions en caractères), puis les mots restants.
+
+    Splits the text according to the emotes tag (positions in characters), then the remaining words."""
     ranges = []
     for item in (emotes_tag or "").split("/"):
         eid, _, positions = item.partition(":")
@@ -98,6 +105,7 @@ class TwitchConnection(Connection):
         self.ws = None
         self.lock = threading.Lock()
         self.user_state = {}           # salon -> tags USERSTATE (couleur, badges de son propre compte)
+                                       # room -> USERSTATE tags (color, badges of one's own account)
         self.authenticated = False
         self.url = IRC_URL
 
@@ -106,6 +114,7 @@ class TwitchConnection(Connection):
         return bool(self.token and self.login and self.authenticated)
 
     # --- commandes depuis l'interface (n'importe quel fil)
+    # --- commands from the interface (any thread)
     def join(self, channel):
         channel = channel.lower()
         with self.lock:
@@ -120,7 +129,9 @@ class TwitchConnection(Connection):
         self._send_raw(f"PART #{channel}")
 
     def send_message(self, channel, text):
-        """Envoie un message ; renvoie le message affiché localement (Twitch ne le renvoie pas)."""
+        """Envoie un message ; renvoie le message affiché localement (Twitch ne le renvoie pas).
+
+        Sends a message; returns the message displayed locally (Twitch does not send it back)."""
         text = text.replace("\r", " ").replace("\n", " ").strip()
         if not text or not self.can_send:
             return None
@@ -130,6 +141,7 @@ class TwitchConnection(Connection):
         body = text[4:] if action else text
         if text.startswith("/") and not action:
             return None  # commande (/ban, /mods…) : rien à afficher
+                         # command (/ban, /mods…): nothing to display
         msg = ChatMessage("twitch", channel.lower(), text=body, user=self.login,
                           display_name=state.get("display-name") or self.login, color=state.get("color", ""),
                           badges=parse_badges(state.get("badges")), kind="action" if action else "msg", own=True)
@@ -153,6 +165,7 @@ class TwitchConnection(Connection):
             ws.close()
 
     # --- boucle de connexion
+    # --- connection loop
     def run_once(self):
         with self.lock:
             channels = sorted(self.channels)
@@ -163,6 +176,7 @@ class TwitchConnection(Connection):
         self.authenticated = False
         with self.lock:
             channels = sorted(self.channels)  # salons ajoutés pendant la connexion compris
+                                              # rooms added during the connection included
         ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands")
         if self.token and self.login:
             ws.send(f"PASS oauth:{self.token}")
@@ -181,6 +195,7 @@ class TwitchConnection(Connection):
                 except socket.timeout:
                     idle = time.time() - last_rx
                     if idle > 360 and not pinged:  # Twitch envoie un PING toutes les ~5 min
+                                                   # Twitch sends a PING every ~5 min
                         ws.send("PING :tmi.twitch.tv")
                         pinged = True
                     elif idle > 400:
@@ -190,6 +205,7 @@ class TwitchConnection(Connection):
                 for line in str(data).split("\r\n"):
                     if line and self._handle(ws, line):
                         return  # RECONNECT demandé par Twitch
+                                # RECONNECT requested by Twitch
         finally:
             self.ws = None
             ws.close()
@@ -207,6 +223,7 @@ class TwitchConnection(Connection):
             self.status(ch, "reconnecting", str(delay))
 
     # --- traitement des lignes
+    # --- line handling
     def _handle(self, ws, line):
         tags, prefix, cmd, params = parse_line(line)
         nick = prefix.split("!")[0]
@@ -263,6 +280,7 @@ class TwitchConnection(Connection):
         msg.reply_to = tags.get("reply-parent-display-name", "")
         if msg.reply_to and text.startswith("@"):
             # Twitch ajoute « @pseudo » en tête des réponses : retiré, la réponse est affichée à part
+            # Twitch adds "@username" at the start of replies: removed, the reply is shown separately
             head, _, rest = text.partition(" ")
             if head[1:].lower() == msg.reply_to.lower():
                 offset = len(head) + 1

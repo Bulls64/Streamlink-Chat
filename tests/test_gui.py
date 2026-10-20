@@ -1,4 +1,6 @@
-"""Test de fumée de l'interface (ignoré sans écran ; sous Linux : xvfb-run -a python -m unittest tests.test_gui)."""
+"""Test de fumée de l'interface (ignoré sans écran ; sous Linux : xvfb-run -a python -m unittest tests.test_gui).
+
+Interface smoke test (skipped without a screen; on Linux: xvfb-run -a python -m unittest tests.test_gui)."""
 import sys
 import tempfile
 import unittest
@@ -14,11 +16,14 @@ try:
     _root.destroy()
     HAVE_DISPLAY = True
 except Exception:  # pas de Tk ou pas d'écran
+                   # no Tk or no screen
     HAVE_DISPLAY = False
 
 
 class Dummy:
-    """Connexion factice : rejoint aussitôt, n'écrit pas."""
+    """Connexion factice : rejoint aussitôt, n'écrit pas.
+
+    Fake connection: joins at once, does not write."""
     can_send = False
 
     def __init__(self, emit, *a, **k):

@@ -1,5 +1,8 @@
 """Instance unique de Streamlink Chat : une seconde ouverture transmet ses chats à la fenêtre déjà ouverte
-(petit serveur local sur 127.0.0.1, accessible seulement depuis cette machine)."""
+(petit serveur local sur 127.0.0.1, accessible seulement depuis cette machine).
+
+Single instance of Streamlink Chat: a second start passes its chats to the window that is already open
+(small local server on 127.0.0.1, reachable only from this machine)."""
 import json
 import logging
 import socket
@@ -13,7 +16,9 @@ _server = None
 
 
 def forward(targets, port=PORT, timeout=1.5):
-    """Vrai si une instance tourne déjà (elle a reçu les chats à ouvrir)."""
+    """Vrai si une instance tourne déjà (elle a reçu les chats à ouvrir).
+
+    True if an instance is already running (it has received the chats to open)."""
     try:
         with socket.create_connection(("127.0.0.1", port), timeout=timeout) as s:
             s.sendall((json.dumps({"magic": MAGIC, "open": [list(t) for t in targets]}) + "\n").encode())
@@ -72,6 +77,7 @@ def stop(srv=None):
     if srv is not None:
         try:
             srv.shutdown(socket.SHUT_RDWR)  # réveille accept() dans l'autre fil
+                                            # wakes up accept() in the other thread
         except OSError:
             pass
         try:
