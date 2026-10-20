@@ -1,4 +1,6 @@
-"""Tests des outils sans interface (chat/core.py), des traductions et de la version."""
+"""Tests des outils sans interface (chat/core.py), des traductions et de la version.
+
+Tests of the tools without interface (chat/core.py), the translations and the version."""
 import json
 import os
 import re
@@ -54,6 +56,7 @@ class TestFiles(unittest.TestCase):
         self.assertEqual(core.load_json(f, {}), {"a": 2})
         f.write_text("{tronqué", encoding="utf-8")
         self.assertEqual(core.load_json(f, {}), {"a": 1})  # repli sur la sauvegarde .bak
+                                                           # fallback to the .bak backup
         self.assertEqual(core.load_json(d / "absent.json", {"d": 0}), {"d": 0})
 
     def test_config_defaults(self):
@@ -90,7 +93,9 @@ class TestVersion(unittest.TestCase):
 
 
 class TestAppUpdate(unittest.TestCase):
-    """Mise à jour depuis les releases GitHub (chat/updater.py)."""
+    """Mise à jour depuis les releases GitHub (chat/updater.py).
+
+    Update from the GitHub releases (chat/updater.py)."""
     SIZE = 1_500_000
 
     def api(self, **over):
@@ -160,6 +165,7 @@ class TestAppUpdate(unittest.TestCase):
                 h.redirect_request(req, None, 302, "", {}, bad)
 
     # -- téléchargement
+    # -- download
     def release(self, payload, size=None):
         import hashlib
         return {"asset": {"name": "StreamlinkChat-9.9.9.exe", "url": "https://x/y",
@@ -211,6 +217,7 @@ class TestAppUpdate(unittest.TestCase):
             self.assertEqual(e.key, key)
             self.assertEqual(list(d.iterdir()), [])
         d, e = self.dl(good, release=self.release(good, size=10))             # plus gros que annoncé
+                                                                              # bigger than announced
         self.assertEqual(e.key, "app_err_hash")
         notpe = b"ZZ" + b"\0" * 1000
         d, e = self.dl(notpe)
@@ -248,6 +255,7 @@ class TestAppUpdate(unittest.TestCase):
         self.assertIsNone(run(v, ("Valid", "CN=Me, O=Y")))
         self.assertEqual(run(v, ("Valid", "CN=Other")), "app_err_signature")
         self.assertEqual(run(v, ("NotSigned", None)), "app_err_signature")      # pas de retour en arrière
+                                                                                # no going back
         self.assertEqual(run(v, ("HashMismatch", "CN=Me")), "app_err_signature")
         self.assertEqual(run(v, ("error", None)), "app_err_signature")
         unsigned = ("NotSigned", None)
@@ -275,6 +283,7 @@ class TestAppUpdate(unittest.TestCase):
         self.assertEqual(t("C:/x/App-11.4.1.exe", "1.4.1", "1.4.2"), Path("C:/x/App-11.4.1.exe"))
         d = Path(tempfile.mkdtemp())
         (d / "StreamlinkChat-1.4.2.exe").write_bytes(b"x")  # déjà pris : on garde le nom actuel
+                                                            # already taken: the current name is kept
         cur = d / "StreamlinkChat-1.4.1.exe"
         self.assertEqual(t(cur, "1.4.1", "1.4.2"), cur)
 
@@ -332,7 +341,9 @@ class TestAppUpdate(unittest.TestCase):
         self.assertFalse(ok(r=None))
         self.assertFalse(ok(can=False))
         self.assertFalse(ok(u="1.3.0"))               # vient d'être mis à jour : pas de boucle
+                                                      # just updated: no loop
         self.assertFalse(config.DEFAULT_CONFIG["auto_update"])   # désactivé par défaut
+                                                                 # disabled by default
         self.assertTrue(config.DEFAULT_CONFIG["update_check"])
 
     def test_arg_value(self):
@@ -342,11 +353,14 @@ class TestAppUpdate(unittest.TestCase):
 
     def test_self_update_needs_frozen_exe(self):
         self.assertFalse(updater.can_self_update())          # lancé depuis les sources
+                                                             # started from the sources
 
     def test_wait_for_pid(self):
         if os.name != "nt":
             self.assertTrue(updater.wait_for_pid(99999999, timeout=0.5))   # processus inexistant
+                                                                           # process that does not exist
             self.assertFalse(updater.wait_for_pid(os.getpid(), timeout=0.3))  # toujours en vie
+                                                                              # still alive
 
     def test_restart_arguments_are_not_channels(self):
         self.assertEqual(config.targets_from_argv(["--wait-pid", "12345", "--updated-from", "0.1.0", "kick.com/xqc"]),

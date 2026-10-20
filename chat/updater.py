@@ -3,6 +3,12 @@
 Seule une release publiée de ce dépôt est acceptée ; le fichier doit avoir la taille et l'empreinte SHA-256
 publiées par GitHub et être un exécutable Windows. L'exécutable en cours est renommé en .old (Windows permet de
 renommer un programme ouvert, pas de l'écraser), la nouvelle version prend sa place et redémarre.
+
+Streamlink Chat update from the GitHub releases (same mechanism as Streamlink Launcher).
+
+Only a published release of this repository is accepted; the file must have the size and SHA-256 digest
+published by GitHub and be a Windows executable. The running executable is renamed to .old (Windows allows
+renaming an open program, not overwriting it), the new version takes its place and restarts.
 """
 import hashlib
 import json
@@ -31,7 +37,9 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamlinkChat"
 
 
 class UpdateError(Exception):
-    """Échec de mise à jour ; .key est la clé de traduction du message à afficher."""
+    """Échec de mise à jour ; .key est la clé de traduction du message à afficher.
+
+    Update failure; .key is the translation key of the message to show."""
 
     def __init__(self, key):
         super().__init__(key)
@@ -51,7 +59,10 @@ def _http_get_json(url, timeout):
 
 def parse_release(data):
     """Réponse de l'API GitHub -> {version, tag, page, asset} ou None. asset = {name, url, size, sha256} ou None.
-    Seules une release publiée (ni brouillon ni préversion) et l'adresse exacte attendue sur ce dépôt passent."""
+    Seules une release publiée (ni brouillon ni préversion) et l'adresse exacte attendue sur ce dépôt passent.
+
+    GitHub API response -> {version, tag, page, asset} or None. asset = {name, url, size, sha256} or None.
+    Only a published release (neither draft nor pre-release) and the exact address expected on this repository pass."""
     if not isinstance(data, dict) or data.get("draft") or data.get("prerelease"):
         return None
     tag = str(data.get("tag_name") or "")
@@ -73,7 +84,9 @@ def parse_release(data):
 
 
 def check_update(current=None):
-    """{current, latest, update, release, error} ; 'update' vaut None si on ne peut pas conclure."""
+    """{current, latest, update, release, error} ; 'update' vaut None si on ne peut pas conclure.
+
+    {current, latest, update, release, error}; 'update' is None if no conclusion can be drawn."""
     if current is None:
         from . import __version__ as current
     result = {"current": current, "latest": None, "update": None, "release": None, "error": None}
@@ -93,7 +106,9 @@ def check_update(current=None):
 
 
 def can_self_update():
-    """Vrai pour l'exécutable Windows dont le dossier est modifiable ; sinon, la page de la release s'ouvre."""
+    """Vrai pour l'exécutable Windows dont le dossier est modifiable ; sinon, la page de la release s'ouvre.
+
+    True for the Windows executable whose folder is writable; otherwise, the release page opens."""
     if not (FROZEN and os.name == "nt"):
         return False
     exe = Path(sys.executable)
@@ -103,7 +118,11 @@ def can_self_update():
 def should_auto_update(cfg, result, updated_from=None, can_update=None):
     """Installer sans demander ? Oui si l'option est active (avec la vérification au démarrage), si une version plus
     récente a un fichier téléchargeable, si l'exécutable peut se remplacer, et si l'on ne sort pas déjà d'une mise
-    à jour (pas de boucle)."""
+    à jour (pas de boucle).
+
+    Install without asking? Yes if the option is on (along with the start-up check), if a newer
+    version has a downloadable file, if the executable can replace itself, and if we are not just coming out of an
+    update (no loop)."""
     if can_update is None:
         can_update = can_self_update()
     release = (result or {}).get("release") or {}
@@ -112,7 +131,9 @@ def should_auto_update(cfg, result, updated_from=None, can_update=None):
 
 
 def _safe_opener():
-    """Ouvreur qui refuse toute redirection hors de GitHub ou en clair (http)."""
+    """Ouvreur qui refuse toute redirection hors de GitHub ou en clair (http).
+
+    Opener that refuses any redirect outside GitHub or in clear text (http)."""
     class Redirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
             u = urlparse(newurl)
@@ -130,7 +151,10 @@ def _open_download(url, timeout=20):
 
 def download_update(release, dest_dir, progress=None, cancel=None, opener=None):
     """Télécharge et contrôle l'exécutable de la release (taille, SHA-256, en-tête « MZ »). Renvoie son chemin ;
-    lève UpdateError (le fichier partiel est alors supprimé). progress(reçus, total) ; cancel : threading.Event."""
+    lève UpdateError (le fichier partiel est alors supprimé). progress(reçus, total) ; cancel : threading.Event.
+
+    Downloads and checks the release's executable (size, SHA-256, "MZ" header). Returns its path;
+    raises UpdateError (the partial file is then deleted). progress(received, total); cancel: threading.Event."""
     asset = (release or {}).get("asset")
     if not asset:
         raise UpdateError("app_err_release")
@@ -186,7 +210,9 @@ def _parse_authenticode(text):
 
 
 def authenticode(path, timeout=40):
-    """Signature Authenticode : (statut, signataire) ; 'error' si PowerShell est indisponible."""
+    """Signature Authenticode : (statut, signataire) ; 'error' si PowerShell est indisponible.
+
+    Authenticode signature: (status, signer); 'error' if PowerShell is unavailable."""
     if os.name != "nt":
         return "error", None
     try:
@@ -210,7 +236,11 @@ def _common_name(subject):
 def check_signature(current_file, new_file, probe=None):
     """None si la nouvelle version peut être installée, sinon la clé du message d'erreur. Un exécutable signé ne
     peut être remplacé que par un exécutable signé par le même éditeur ; sinon, seule une signature invalide
-    (fichier modifié) est refusée."""
+    (fichier modifié) est refusée.
+
+    None if the new version can be installed, otherwise the key of the error message. A signed executable can
+    only be replaced by an executable signed by the same publisher; otherwise, only an invalid signature
+    (modified file) is refused."""
     probe = probe or authenticode
     cur_status, cur_subject = probe(current_file)
     new_status, new_subject = probe(new_file)
@@ -221,7 +251,9 @@ def check_signature(current_file, new_file, probe=None):
 
 
 def target_exe(exe, old_version, new_version):
-    """StreamlinkChat-0.1.0.exe mis à jour en 0.2.0 devient StreamlinkChat-0.2.0.exe (un nom sans version reste)."""
+    """StreamlinkChat-0.1.0.exe mis à jour en 0.2.0 devient StreamlinkChat-0.2.0.exe (un nom sans version reste).
+
+    StreamlinkChat-0.1.0.exe updated to 0.2.0 becomes StreamlinkChat-0.2.0.exe (a name without a version stays)."""
     exe = Path(exe)
     if not old_version or not new_version or old_version == new_version:
         return exe
@@ -232,7 +264,10 @@ def target_exe(exe, old_version, new_version):
 
 def install_update(new_file, exe=None, final=None):
     """Renomme l'exécutable en cours en .old, met la nouvelle version à sa place (ou sous `final`).
-    En cas d'échec, l'ancien est remis."""
+    En cas d'échec, l'ancien est remis.
+
+    Renames the running executable to .old, puts the new version in its place (or under `final`).
+    On failure, the old one is put back."""
     exe, new_file = Path(exe or sys.executable), Path(new_file)
     final = Path(final) if final else exe
     old = exe.with_name(exe.name + OLD_SUFFIX)
@@ -256,7 +291,10 @@ def install_update(new_file, exe=None, final=None):
 
 def cleanup_leftovers(exe=None, tries=30, delay=1.0):
     """Au démarrage : ancien exécutable (.old, l'ancienne instance peut mettre quelques secondes à se fermer)
-    et téléchargements interrompus."""
+    et téléchargements interrompus.
+
+    At start-up: old executable (.old, the old instance may take a few seconds to close)
+    and interrupted downloads."""
     exe = Path(exe or sys.executable)
     old = exe.with_name(exe.name + OLD_SUFFIX)
     for _i in range(tries):
@@ -276,7 +314,10 @@ def cleanup_leftovers(exe=None, tries=30, delay=1.0):
 
 def relaunch(exe=None, old_version=None, extra_args=()):
     """Démarre la nouvelle version, détachée ; elle attend la fin de celle-ci (--wait-pid) avant de démarrer.
-    PYINSTALLER_RESET_ENVIRONMENT : sinon l'exécutable réutiliserait le dossier temporaire de l'ancien."""
+    PYINSTALLER_RESET_ENVIRONMENT : sinon l'exécutable réutiliserait le dossier temporaire de l'ancien.
+
+    Starts the new version, detached; it waits for this one to end (--wait-pid) before starting.
+    PYINSTALLER_RESET_ENVIRONMENT: otherwise the executable would reuse the old one's temporary folder."""
     exe = str(exe or sys.executable)
     args = [exe, "--wait-pid", str(os.getpid()), *extra_args]
     if old_version:
@@ -293,7 +334,9 @@ def relaunch(exe=None, old_version=None, extra_args=()):
 
 
 def wait_for_pid(pid, timeout=20):
-    """Attend la fin d'un processus (l'ancienne version, après une mise à jour). True s'il est terminé."""
+    """Attend la fin d'un processus (l'ancienne version, après une mise à jour). True s'il est terminé.
+
+    Waits for a process to end (the old version, after an update). True if it has ended."""
     if os.name == "nt":
         try:
             import ctypes

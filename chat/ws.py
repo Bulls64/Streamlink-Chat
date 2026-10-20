@@ -2,6 +2,11 @@
 
 Suffisant pour les chats : messages texte, fragmentation, ping/pong, fermeture propre, proxy HTTP(S)
 (variables d'environnement / réglages Windows via urllib). Pas d'extension (pas de compression).
+
+Minimal WebSocket client (RFC 6455), standard library only.
+
+Enough for the chats: text messages, fragmentation, ping/pong, clean closing, HTTP(S) proxy
+(environment variables / Windows settings via urllib). No extension (no compression).
 """
 import base64
 import hashlib
@@ -16,6 +21,7 @@ import urllib.request
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36"
 MAX_MESSAGE = 4 * 1024 * 1024  # un message de chat ne dépasse jamais ça
+                               # a chat message never exceeds this
 
 
 class WebSocketError(Exception):
@@ -29,11 +35,14 @@ class ConnectionClosed(WebSocketError):
 
 
 def _proxy_for(scheme, host):
-    """Proxy à utiliser pour cet hôte (même logique que urllib : variables d'environnement, registre Windows)."""
+    """Proxy à utiliser pour cet hôte (même logique que urllib : variables d'environnement, registre Windows).
+
+    Proxy to use for this host (same logic as urllib: environment variables, Windows registry)."""
     try:
         if urllib.request.proxy_bypass(host):
             return None
     except Exception:  # proxy_bypass peut échouer sur des configurations Windows exotiques
+                       # proxy_bypass can fail on exotic Windows configurations
         return None
     proxies = urllib.request.getproxies()
     url = proxies.get("https" if scheme == "wss" else "http")
@@ -50,6 +59,7 @@ class WebSocket:
         self.closed = False
 
     # --- connexion
+    # --- connection
     def connect(self):
         u = urllib.parse.urlsplit(self.url)
         if u.scheme not in ("ws", "wss"):
@@ -112,9 +122,11 @@ class WebSocket:
         return lines[0], headers
 
     # --- trames
+    # --- frames
     def _read_more(self):
         try:
             chunk = self.sock.recv(65536)  # socket.timeout possible : le tampon reste intact
+                                           # socket.timeout possible: the buffer stays intact
         except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
             raise ConnectionClosed(1006, str(e)) from None
         if not chunk:
@@ -123,7 +135,10 @@ class WebSocket:
 
     def _parse(self):
         """Trame complète en tête du tampon -> (fin, opcode, données), retirée du tampon ; None si incomplète.
-        Rien n'est consommé tant que la trame n'est pas entière (un délai d'attente ne la coupe jamais)."""
+        Rien n'est consommé tant que la trame n'est pas entière (un délai d'attente ne la coupe jamais).
+
+        Complete frame at the head of the buffer -> (fin, opcode, data), removed from the buffer; None if incomplete.
+        Nothing is consumed until the frame is whole (a timeout never cuts it)."""
         buf = self._buf
         if len(buf) < 2:
             return None
@@ -173,7 +188,10 @@ class WebSocket:
 
     def recv(self):
         """Message texte suivant (str). Répond seul aux pings. Lève ConnectionClosed à la fermeture,
-        socket.timeout si rien n'arrive dans le délai (la connexion reste utilisable)."""
+        socket.timeout si rien n'arrive dans le délai (la connexion reste utilisable).
+
+        Next text message (str). Answers pings by itself. Raises ConnectionClosed on closing,
+        socket.timeout if nothing arrives in time (the connection stays usable)."""
         while True:
             frame = self._parse()
             if frame is None:
@@ -186,6 +204,7 @@ class WebSocket:
             if op == 0xA:      # pong
                 continue
             if op == 0x8:      # fermeture
+                               # close
                 code = struct.unpack("!H", payload[:2])[0] if len(payload) >= 2 else None
                 try:
                     self._send_frame(0x8, payload[:2])

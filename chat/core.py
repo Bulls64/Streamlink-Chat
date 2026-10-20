@@ -1,4 +1,6 @@
-"""Chemins, fichiers JSON, journal, langues et recherche de Streamlink (sans interface)."""
+"""Chemins, fichiers JSON, journal, langues et recherche de Streamlink (sans interface).
+
+Paths, JSON files, log, languages and Streamlink lookup (without interface)."""
 import json
 import locale
 import logging
@@ -9,6 +11,7 @@ from pathlib import Path
 
 # ---------------------
 # Chemins
+# Paths
 # ---------------------
 FROZEN = bool(getattr(sys, "frozen", False))
 BASE_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent.parent
@@ -34,6 +37,8 @@ def _user_data_dir():
 
 # Version portable par défaut : les données restent à côté de l'application. Dossier en lecture seule (ou AppImage,
 # extraite dans un dossier temporaire) : %APPDATA%\Streamlink Chat ou ~/.config/streamlink-chat.
+# Portable version by default: the data stays next to the application. Read-only folder (or AppImage,
+# extracted to a temporary folder): %APPDATA%\Streamlink Chat or ~/.config/streamlink-chat.
 APPIMAGE = bool(os.environ.get("APPIMAGE")) and not FROZEN and os.name != "nt"
 PORTABLE = not APPIMAGE and _is_writable(BASE_DIR)
 DATA_ROOT = BASE_DIR if PORTABLE else _user_data_dir()
@@ -41,12 +46,15 @@ LANG_DIR = BASE_DIR / "lang" if (BASE_DIR / "lang").is_dir() else RES_DIR / "lan
 LOG_FILE = DATA_ROOT / "chat.log"
 
 log = logging.getLogger("streamlink_launcher")  # même nom que le lanceur : un seul journal si les deux cohabitent
+                                                # same name as the launcher: a single log if both live side by side
 log.addHandler(logging.NullHandler())
 _log_ready = False
 
 
 def setup_logging():
-    """Active l'écriture de chat.log (2 × 512 Ko maximum)."""
+    """Active l'écriture de chat.log (2 × 512 Ko maximum).
+
+    Enables writing chat.log (2 × 512 KB maximum)."""
     global _log_ready
     if _log_ready:
         return
@@ -66,7 +74,9 @@ def setup_logging():
 # JSON
 # ---------------------
 def load_json(path, default):
-    """Lit un fichier JSON ; absent ou illisible : default (la sauvegarde .bak est essayée en second)."""
+    """Lit un fichier JSON ; absent ou illisible : default (la sauvegarde .bak est essayée en second).
+
+    Reads a JSON file; missing or unreadable: default (the .bak backup is tried second)."""
     path = Path(path)
     for candidate in (path, path.with_name(path.name + ".bak")):
         try:
@@ -80,7 +90,9 @@ def load_json(path, default):
 
 
 def save_json(path, data):
-    """Écriture atomique (fichier temporaire puis remplacement) ; la version précédente est gardée en .bak."""
+    """Écriture atomique (fichier temporaire puis remplacement) ; la version précédente est gardée en .bak.
+
+    Atomic write (temporary file, then replacement); the previous version is kept as .bak."""
     path = Path(path)
     tmp = path.with_name(path.name + ".tmp")
     try:
@@ -107,11 +119,13 @@ def save_json(path, data):
 
 # ---------------------
 # Langues
+# Languages
 # ---------------------
 def detect_system_language():
     try:
         name = locale.getlocale()[0] or ""
         if os.name != "nt":  # Linux : la langue d'affichage, même si la locale n'est pas générée
+                             # Linux: the display language, even if the locale is not generated
             name = next((os.environ[v] for v in ("LC_ALL", "LC_MESSAGES", "LANG")
                          if os.environ.get(v) and os.environ[v] not in ("C", "POSIX")), name)
         else:
@@ -124,7 +138,9 @@ def detect_system_language():
 
 
 def available_languages():
-    """[(code, nom affiché)] d'après les fichiers de lang/."""
+    """[(code, nom affiché)] d'après les fichiers de lang/.
+
+    [(code, displayed name)] from the files in lang/."""
     langs = [(f.stem, load_json(f, {}).get("_language_name", f.stem)) for f in sorted(LANG_DIR.glob("*.json"))]
     return langs or [("en", "English")]
 
@@ -148,6 +164,7 @@ class I18n:
 
 # ---------------------
 # Streamlink (bouton « Regarder »)
+# Streamlink ("Watch" button)
 # ---------------------
 STREAMLINK_CANDIDATES = [
     "streamlink",

@@ -1,4 +1,6 @@
-"""Réglages de Streamlink Chat (chat.json) et lecture des adresses de chaînes."""
+"""Réglages de Streamlink Chat (chat.json) et lecture des adresses de chaînes.
+
+Streamlink Chat settings (chat.json) and parsing of channel addresses."""
 import copy
 import re
 import urllib.parse
@@ -9,19 +11,27 @@ CONFIG_FILE = core.DATA_ROOT / "chat.json"
 CACHE_DIR = core.DATA_ROOT / "cache" / "emotes"
 
 PLATFORMS = {  # identifiant -> (nom, couleur, couleur du texte posé dessus)
+               # id -> (name, color, color of the text on top of it)
     "twitch": ("Twitch", "#9146FF", "#FFFFFF"),
     "kick": ("Kick", "#53FC18", "#000000"),
     "steamtv": ("Steam TV", "#2A475E", "#C7D5E0"),   # bleu nuit de Steam
+                                                     # Steam's navy blue
 }
 NEUTRAL = ("#6B7280", "#FFFFFF")
 
 DEFAULT_CONFIG = {
     "language": "",            # vide : celle du système
+                               # empty: the system's one
     "theme": "auto",           # auto (suit Windows), light, dark
+                               # auto (follows Windows), light, dark
     "quality": "best",         # qualité demandée à Streamlink par le bouton ▶
+                               # quality requested from Streamlink by the ▶ button
     "streamlink_path": "",     # vide : détecté automatiquement
+                               # empty: detected automatically
     "update_check": True,      # cherche une nouvelle version au démarrage
+                               # looks for a new version at start-up
     "auto_update": False,      # et l'installe sans demander (exécutable Windows seulement)
+                               # and installs it without asking (Windows executable only)
     "tabs": [],                # [{"platform": "twitch", "channel": "eslcs"}]
     "selected": 0,
     "geometry": "",
@@ -30,9 +40,11 @@ DEFAULT_CONFIG = {
     "timestamps": True,
     "badges": True,
     "platform_colors": True,   # carte et onglets teintés de la couleur de la plateforme
+                               # card and tabs tinted with the platform's color
     "animated": True,
     "providers": ["bttv", "ffz", "7tv"],
     "highlights": [],          # mots qui mettent un message en évidence (en plus de son propre pseudo)
+                               # words that highlight a message (in addition to one's own username)
     "max_messages": 1000,
     "accounts": {"twitch": {}, "kick": {}},
 }
@@ -73,6 +85,7 @@ def save(cfg):
 
 # ---------------------
 # Adresses et noms de chaînes
+# Channel addresses and names
 # ---------------------
 NAME_RE = {
     "twitch": re.compile(r"^[A-Za-z0-9_]{1,25}$"),
@@ -85,7 +98,9 @@ RESERVED = {"twitch": {"directory", "videos", "settings", "subscriptions", "inve
 
 
 def parse_target(text, default_platform="twitch"):
-    """Nom de chaîne ou lien -> (plateforme, chaîne), ou None si ce n'est pas reconnu."""
+    """Nom de chaîne ou lien -> (plateforme, chaîne), ou None si ce n'est pas reconnu.
+
+    Channel name or link -> (platform, channel), or None if it is not recognized."""
     text = (text or "").strip()
     if not text:
         return None
@@ -134,7 +149,9 @@ def channel_url(platform, channel):
 
 
 def targets_from_argv(argv):
-    """--open twitch:eslcs --open kick:xqc, ou des liens en arguments."""
+    """--open twitch:eslcs --open kick:xqc, ou des liens en arguments.
+
+    --open twitch:eslcs --open kick:xqc, or links as arguments."""
     out = []
     args = list(argv)
     while args:
@@ -144,6 +161,7 @@ def targets_from_argv(argv):
         elif a in ("--wait-pid", "--updated-from"):
             if args:
                 args.pop(0)  # valeur de l'option, pas une chaîne
+                             # value of the option, not a channel
             continue
         elif a.startswith("--"):
             continue

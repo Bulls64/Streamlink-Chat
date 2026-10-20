@@ -7,6 +7,16 @@ Depuis le 13 octobre 2026, le site de Kick passe par une connexion « temps rée
 Les publications gardent l'ancien format (App\\Events\\ChatMessageEvent…). Ce protocole n'est pas documenté
 par Kick : tout est lu avec tolérance, et l'ancienne connexion Pusher reste un dernier recours.
 L'envoi de messages passe par l'API officielle (https://api.kick.com/public/v1/chat, jeton OAuth).
+
+Kick chat.
+
+Since 13 October 2026, Kick's website goes through a negotiated "real-time" connection:
+  1. POST https://web.kick.com/api/v1/realtime/channels/{id}/chat/connection -> endpoint (Centrifugo, or Pusher)
+  2. POST https://web.kick.com/api/v1/realtime/auth/connection -> Centrifugo connection token
+  3. Centrifugo WebSocket (JSON protocol): connect, then subscribe to chatrooms.{room}.v2 and channel.{id}
+Publications keep the old format (App\\Events\\ChatMessageEvent…). This protocol is not documented
+by Kick: everything is read leniently, and the old Pusher connection remains a last resort.
+Sending messages goes through the official API (https://api.kick.com/public/v1/chat, OAuth token).
 """
 import json
 import logging
@@ -45,7 +55,9 @@ class KickError(Exception):
 
 
 def resolve_channel(slug):
-    """Nom de chaîne -> {channel_id, chatroom_id, user_id, name, live}."""
+    """Nom de chaîne -> {channel_id, chatroom_id, user_id, name, live}.
+
+    Channel name -> {channel_id, chatroom_id, user_id, name, live}."""
     last = None
     for tpl in CHANNEL_URLS:
         try:
@@ -69,7 +81,9 @@ def resolve_channel(slug):
 
 
 def find_endpoints(data):
-    """Points d'accès dans la réponse de négociation, quelle que soit son enveloppe ({data: …}, liste…)."""
+    """Points d'accès dans la réponse de négociation, quelle que soit son enveloppe ({data: …}, liste…).
+
+    Endpoints in the negotiation response, whatever its envelope ({data: …}, list…)."""
     found = []
 
     def walk(node):
@@ -132,7 +146,9 @@ def plain_text(content):
 
 
 class KickChannel(Connection):
-    """Une connexion par chaîne Kick (la négociation se fait par chaîne)."""
+    """Une connexion par chaîne Kick (la négociation se fait par chaîne).
+
+    One connection per Kick channel (the negotiation is done per channel)."""
 
     platform = "kick"
 
@@ -169,6 +185,7 @@ class KickChannel(Connection):
                     continue
                 return
             except Exception as e:  # on essaie le point d'accès suivant
+                                    # try the next endpoint
                 log.info("Kick %s via %s : %s", self.slug, provider, e)
                 errors.append(f"{provider}: {e}")
         raise KickError("; ".join(errors) or "no_endpoint")
@@ -178,11 +195,13 @@ class KickChannel(Connection):
         self.status(self.slug, "error", code if code in ("blocked", "not_found") else code[:200])
         if code == "not_found":
             self.stop_event.set()  # inutile de réessayer
+                                   # no point in retrying
 
     def on_retry(self, delay):
         self.status(self.slug, "reconnecting", str(delay))
 
     # --- négociation
+    # --- negotiation
     def _negotiate(self):
         body = {"client": {"type": "web", "id": self.client_id}, "accepted_providers": ["pusher", "centrifugo"]}
         for url in (NEGOTIATE_URL.format(channel_id=self.info["channel_id"]), NEGOTIATE_FALLBACK_URL):
@@ -206,6 +225,7 @@ class KickChannel(Connection):
         return [f"chatrooms.{self.info['chatroom_id']}.v2", f"channel.{self.info['channel_id']}"]
 
     # --- Centrifugo (protocole JSON)
+    # --- Centrifugo (JSON protocol)
     def _run_centrifugo(self, ep):
         url = ep.get("endpoint") or ep.get("url") or DEFAULT_CENTRIFUGO
         token = ep.get("token") or self._token()
@@ -270,6 +290,7 @@ class KickChannel(Connection):
         raise KickError("centrifugo: no connect reply")
 
     # --- Pusher (ancien protocole, gardé en dernier recours)
+    # --- Pusher (old protocol, kept as a last resort)
     def _run_pusher(self, ep):
         key, cluster = ep.get("app_key") or ep.get("key"), ep.get("cluster") or "us2"
         url = ep.get("endpoint") or ep.get("url") or PUSHER_URL.format(cluster=cluster, key=key)
@@ -307,6 +328,7 @@ class KickChannel(Connection):
             ws.close()
 
     # --- événements (identiques quelle que soit la connexion)
+    # --- events (identical whatever the connection)
     def _publication(self, pub):
         if isinstance(pub, str):
             try:
@@ -366,7 +388,9 @@ class KickChannel(Connection):
 
 
 class KickManager:
-    """Même interface que TwitchConnection : join, part, send_message, stop."""
+    """Même interface que TwitchConnection : join, part, send_message, stop.
+
+    Same interface as TwitchConnection: join, part, send_message, stop."""
 
     platform = "kick"
 
@@ -403,7 +427,9 @@ class KickManager:
             ch.stop()
 
     def send_message(self, slug, text, http_func=None):
-        """Envoi par l'API officielle (appelé hors de l'interface). Kick renvoie le message dans le chat."""
+        """Envoi par l'API officielle (appelé hors de l'interface). Kick renvoie le message dans le chat.
+
+        Sending through the official API (called outside the interface). Kick sends the message back in the chat."""
         ch = self.channels.get(slug.lower())
         if not self.token or ch is None or not ch.info:
             raise KickError("not_ready")

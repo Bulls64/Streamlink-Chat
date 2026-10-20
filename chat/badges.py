@@ -1,5 +1,8 @@
 """Badges dessinés (petites icônes PNG générées, sans fichier ni dépendance) : un carré arrondi coloré et un
-pictogramme blanc, comme dans les chats des plateformes."""
+pictogramme blanc, comme dans les chats des plateformes.
+
+Drawn badges (small generated PNG icons, without files or dependencies): a colored rounded square and a
+white pictogram, as in the platforms' chats."""
 import base64
 import math
 import struct
@@ -25,6 +28,7 @@ def _thick_line(x0, y0, x1, y1, w):
 
 
 # Pictogrammes en coordonnées 0..1 : liste de polygones
+# Pictograms in 0..1 coordinates: list of polygons
 GLYPHS = {
     "broadcaster": [[(0.2, 0.32), (0.62, 0.32), (0.62, 0.68), (0.2, 0.68)], [(0.62, 0.5), (0.82, 0.34), (0.82, 0.66)]],
     "moderator": [_thick_line(0.28, 0.72, 0.74, 0.26, 0.13), _thick_line(0.22, 0.56, 0.44, 0.78, 0.11)],
@@ -63,7 +67,9 @@ def _png(w, h, rows):
 
 
 def badge_png(kind, size, color=None, fg="#FFFFFF"):
-    """PNG RGBA (octets) du badge, size x size pixels."""
+    """PNG RGBA (octets) du badge, size x size pixels.
+
+    RGBA PNG (bytes) of the badge, size x size pixels."""
     color = color or COLORS.get(kind, "#6B7280")
     br, bgc, bb = (int(color[i:i + 2], 16) for i in (1, 3, 5))
     fr, fgc, fb = (int(fg[i:i + 2], 16) for i in (1, 3, 5))
@@ -79,6 +85,7 @@ def badge_png(kind, size, color=None, fg="#FFFFFF"):
                 for sx in samples:
                     x, y = (px_ + sx) / size, (py + sy) / size
                     # carré arrondi
+                    # rounded square
                     dx = max(rad - x, 0, x - (1 - rad))
                     dy = max(rad - y, 0, y - (1 - rad))
                     if dx * dx + dy * dy <= rad * rad:

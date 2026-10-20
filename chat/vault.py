@@ -2,6 +2,11 @@
 
 Sous Windows, chiffrés avec DPAPI (CryptProtectData) : lisibles seulement par ce compte Windows, sur ce PC.
 Ailleurs, gardés tels quels (le fichier est dans le dossier personnel de l'utilisateur).
+
+Protection of the tokens saved in chat.json.
+
+On Windows, encrypted with DPAPI (CryptProtectData): readable only by this Windows account, on this PC.
+Elsewhere, kept as they are (the file is in the user's home folder).
 """
 import base64
 import ctypes

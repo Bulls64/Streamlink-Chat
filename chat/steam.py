@@ -4,6 +4,13 @@ API web interne de Steam (non officielle) :
   getbroadcastmpd?steamid=…  -> identifiant de la diffusion en cours (broadcastid)
   getchatinfo?steamid=…&broadcastid=…  -> chat_id + modèle d'adresse des messages (view_url_template)
   modèle (%llu = chat_id, %u = horodatage de départ) -> {messages: […], next_request: …}, interrogé en boucle.
+
+Chat of Steam broadcasts (steam.tv and steamcommunity.com/broadcast/watch/…), read-only.
+
+Steam's internal web API (unofficial):
+  getbroadcastmpd?steamid=…  -> id of the current broadcast (broadcastid)
+  getchatinfo?steamid=…&broadcastid=…  -> chat_id + message address template (view_url_template)
+  template (%llu = chat_id, %u = start timestamp) -> {messages: […], next_request: …}, polled in a loop.
 """
 import html
 import json
@@ -31,7 +38,9 @@ class SteamError(Exception):
 
 
 def find_steamid(page):
-    """steamid du diffuseur dans une page steam.tv (attribut data-broadcast de #webui_config)."""
+    """steamid du diffuseur dans une page steam.tv (attribut data-broadcast de #webui_config).
+
+    Broadcaster's steamid in a steam.tv page (data-broadcast attribute of #webui_config)."""
     m = re.search(r'data-broadcast="([^"]*)"', page)
     if m:
         try:
@@ -45,7 +54,9 @@ def find_steamid(page):
 
 
 def steam_fragments(text):
-    """Texte -> fragments, avec les émoticônes Steam (:nom: ou ːnomː) en images."""
+    """Texte -> fragments, avec les émoticônes Steam (:nom: ou ːnomː) en images.
+
+    Text -> fragments, with Steam emoticons (:name: or ːnameː) as images."""
     frags, cursor = [], 0
     for m in EMOTICON_RE.finditer(text):
         if m.start() > cursor:
@@ -81,6 +92,7 @@ class SteamChannel(Connection):
             if not self.steamid:
                 raise SteamError("not_found")
         # La page de visionnage pose le cookie sessionid demandé par getbroadcastmpd
+        # The watch page sets the sessionid cookie required by getbroadcastmpd
         self._get(WATCH_URL.format(steamid=self.steamid), raw=True)
         session = next((c.value for c in self.jar if c.name == "sessionid"), "")
         q = urllib.parse.urlencode({"steamid": self.steamid, "broadcastid": 0, "viewertoken": 0,
@@ -117,6 +129,8 @@ class SteamChannel(Connection):
                     continue
                 # Normalement, start=next_request ne renvoie que les nouveaux messages ; si Steam renvoie
                 # l'horodatage des messages, il sert en plus à écarter un éventuel doublon.
+                # Normally, start=next_request returns only the new messages; if Steam returns
+                # the messages' timestamp, it is also used to discard a possible duplicate.
                 key = (msg.user_id, msg.text, m.get("time")) if m.get("time") else None
                 if key is None or key not in seen:
                     if key:
@@ -148,6 +162,7 @@ class SteamChannel(Connection):
 
     def on_retry(self, delay):
         # Hors ligne : on revérifie toutes les 30 s
+        # Offline: check again every 30 s
         self.status(self.name, "reconnecting", str(delay))
 
 

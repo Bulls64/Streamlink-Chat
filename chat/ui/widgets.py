@@ -1,4 +1,6 @@
-"""Composants dessinés sur des Canvas Tk (repris de Streamlink Launcher) : peu d'objets, aucune dépendance."""
+"""Composants dessinés sur des Canvas Tk (repris de Streamlink Launcher) : peu d'objets, aucune dépendance.
+
+Components drawn on Tk Canvases (taken from Streamlink Launcher): few objects, no dependency."""
 import logging
 import tkinter as tk
 
@@ -11,7 +13,11 @@ log = logging.getLogger("streamlink_launcher")
 def _schedule_redraw(widget):
     """Regroupe les redessins dus aux changements de taille : un seul passage, à la fin du calcul de la mise
     en page. Sans cela, chaque composant était dessiné une fois à sa taille demandée puis une fois à sa taille
-    réelle (deux fois plus de travail à chaque ouverture de panneau)."""
+    réelle (deux fois plus de travail à chaque ouverture de panneau).
+
+    Groups the redraws caused by size changes: a single pass, at the end of the layout
+    computation. Without it, each component was drawn once at its requested size, then once at its real
+    size (twice as much work each time a panel opens)."""
     app = widget.app
     pending = app.__dict__.setdefault("_redraw_pending", {})
     pending[str(widget)] = widget
@@ -36,6 +42,12 @@ class Widget(tk.Canvas):
     Zones : un composant à plusieurs parties cliquables redéfinit zone_at(x, y) ; la zone survolée est
     alors suivie dans self.zone (et redessinée quand elle change). zone_cursor : main uniquement
     au-dessus d'une zone, flèche ailleurs.
+
+    Base: redraws at the real size, handles hover, click, keyboard and focus.
+
+    Zones: a component with several clickable parts redefines zone_at(x, y); the hovered zone is
+    then tracked in self.zone (and redrawn when it changes). zone_cursor: hand only
+    over a zone, arrow elsewhere.
     """
 
     zone_cursor = False
@@ -52,6 +64,7 @@ class Widget(tk.Canvas):
         super().__init__(parent, width=width, height=height, bg=bg, highlightthickness=0, bd=0,
                          takefocus=1 if focus else 0, cursor="hand2" if command else "")
         self._drawn = None  # taille du dernier dessin
+                            # size of the last drawing
         self.bind("<Configure>", self._on_configure)
         self.bind("<Enter>", self._enter)
         self.bind("<Leave>", self._leave)
@@ -64,6 +77,7 @@ class Widget(tk.Canvas):
             self.bind("<FocusOut>", lambda e: self._set_focus(False))
 
     # --- état
+    # --- state
     def _enter(self, e):
         self.hover = True
         self.redraw()
@@ -111,6 +125,7 @@ class Widget(tk.Canvas):
         self.redraw()
 
     # --- dessin
+    # --- drawing
     @property
     def c(self):
         return self.app.c
@@ -154,7 +169,9 @@ class Widget(tk.Canvas):
 
 
 class Button(Widget):
-    """kind : primary (couleur d'accent), secondary (contour), ghost (fond au survol), link (texte)."""
+    """kind : primary (couleur d'accent), secondary (contour), ghost (fond au survol), link (texte).
+
+    kind: primary (accent color), secondary (outline), ghost (background on hover), link (text)."""
 
     def __init__(self, parent, app, text="", icon=None, command=None, kind="secondary", height=40, font=None,
                  accent=None, width=None, pad=16, icon_size=14, radius=10, bg=None, color=None):
@@ -221,6 +238,7 @@ class Button(Widget):
             self.create_text(x, h / 2, text=self.text, font=self.font, fill=fg, anchor="w")
         badge = getattr(self, "badge", None)
         if badge:  # petite pastille (ex. mise à jour disponible)
+                   # small badge (e.g. update available)
             self.P.circle(self, w - self.px(10), self.px(10), self.px(8), badge, bg=fill or bg)
 
     def set_badge(self, color):
@@ -284,7 +302,9 @@ class Pill(Widget):
 
 
 class Field(tk.Frame):
-    """Champ arrondi avec icône, raccourci clavier, badge, bouton d'action et texte indicatif."""
+    """Champ arrondi avec icône, raccourci clavier, badge, bouton d'action et texte indicatif.
+
+    Rounded field with an icon, keyboard shortcut, badge, action button and hint text."""
 
     def __init__(self, parent, app, variable, placeholder="", icon=None, kbd=None, ring=False, mono=False,
                  height=40, font=None, radius=8, accent=None, action_icon=None, action_command=None,
@@ -292,6 +312,7 @@ class Field(tk.Frame):
         bg = parent.cget("bg")
         super().__init__(parent, bg=bg)
         self.plain = plain  # sans cadre (barre du mode mini)
+                            # frameless (mini mode bar)
         self.app, self.var = app, variable
         self.icon_name, self.kbd, self.ring, self.radius = icon, kbd, ring, app.px(radius)
         self.accent = accent
@@ -302,6 +323,7 @@ class Field(tk.Frame):
         self.font = font or (app.fonts.mono_field if mono else app.fonts.body)
         fbg = c[bg_key]
         # Petite largeur demandée : le champ s'étire, sans écraser ses voisins
+        # Small requested width: the field stretches, without crushing its neighbors
         self.cv = tk.Canvas(self, width=app.px(120), height=app.px(height), bg=bg, highlightthickness=0, bd=0,
                             cursor="xterm")
         self.cv.pack(fill="x")
@@ -369,7 +391,9 @@ class Field(tk.Frame):
             self.focus()
 
     def _sync(self, *args):
-        """Appelé quand le texte change : texte indicatif et badge."""
+        """Appelé quand le texte change : texte indicatif et badge.
+
+        Called when the text changes: hint text and badge."""
         if self.badge:
             self.redraw()
         else:
@@ -447,7 +471,9 @@ class Field(tk.Frame):
 
 
 class Select(Widget):
-    """Liste déroulante (ouvre un menu dessiné par l'application)."""
+    """Liste déroulante (ouvre un menu dessiné par l'application).
+
+    Drop-down list (opens a menu drawn by the application)."""
 
     def __init__(self, parent, app, options, value, on_change, height=52, width=None, font=None, bg_key="field",
                  popup_width=None):
@@ -517,7 +543,9 @@ class Switch(Widget):
 
 
 class Popover:
-    """Petit menu flottant (liste de choix, suggestions). Un seul ouvert à la fois."""
+    """Petit menu flottant (liste de choix, suggestions). Un seul ouvert à la fois.
+
+    Small floating menu (list of choices, suggestions). Only one open at a time."""
 
     ROWS = 8
 
@@ -556,6 +584,7 @@ class Popover:
         self.cv = tk.Canvas(app, width=w, height=h, bg=app.c.bg, highlightthickness=0, bd=0, cursor="hand2")
         self.cv.place(x=x, y=y)
         tk.Misc.lift(self.cv)  # Canvas.lift() agit sur les éléments dessinés, pas sur le widget
+                               # Canvas.lift() acts on the drawn items, not on the widget
         self.cv.bind("<Motion>", self._motion)
         self.cv.bind("<ButtonRelease-1>", self._click)
         self.cv.bind("<MouseWheel>", self._wheel)
@@ -629,7 +658,9 @@ class Popover:
 
 
 def draw_rows(cv, app, items, hi, offset, max_rows, pad, row_h, w, bg):
-    """Lignes de choix / suggestions (partagé par le menu flottant et le mode mini)."""
+    """Lignes de choix / suggestions (partagé par le menu flottant et le mode mini).
+
+    Choice / suggestion rows (shared by the floating menu and the mini mode)."""
     c, px, P, f = app.c, app.px, app.painter, app.fonts
     hover_bg = mix(bg, "#808080", 0.16)
     for row in range(min(max_rows, len(items) - offset)):
@@ -680,7 +711,9 @@ def _is_inside(widget, container):
 
 
 class ThinScrollbar(tk.Canvas):
-    """Barre de défilement fine, cachée quand tout le contenu est visible."""
+    """Barre de défilement fine, cachée quand tout le contenu est visible.
+
+    Thin scrollbar, hidden when all the content is visible."""
 
     def __init__(self, parent, app, target):
         super().__init__(parent, width=app.px(10), bg=parent.cget("bg"), highlightthickness=0, bd=0)
@@ -740,6 +773,7 @@ class ScrollArea(tk.Frame):
 
     def _body_changed(self, e):
         # Une seule mise à jour de la zone de défilement par passage, pas une par ligne ajoutée
+        # A single update of the scroll region per pass, not one per added row
         if self._region_job is None:
             self._region_job = self.after_idle(self._update_region)
 
@@ -775,7 +809,9 @@ class ScrollArea(tk.Frame):
 
 
 class Toast(tk.Canvas):
-    """Notification non bloquante, en bas de la fenêtre."""
+    """Notification non bloquante, en bas de la fenêtre.
+
+    Non-blocking notification, at the bottom of the window."""
 
     def __init__(self, app, text, kind="ok", action=None, duration=2800, bottom=60):
         c, f, px = app.c, app.fonts, app.px
@@ -821,7 +857,9 @@ class Toast(tk.Canvas):
 
 
 class StatusCard(Widget):
-    """Carte d'état (Streamlink trouvé / introuvable) avec un bouton à droite."""
+    """Carte d'état (Streamlink trouvé / introuvable) avec un bouton à droite.
+
+    Status card (Streamlink found / not found) with a button on the right."""
 
     LEVELS = {"ok": ("check", "ok"), "warn": ("warning", "warn"), "update": ("arrow_up", "warn"),
               "busy": ("sync", "muted")}
@@ -838,7 +876,9 @@ class StatusCard(Widget):
         return self.level == "ok"
 
     def set_state(self, ok, title, detail, button=None, level=None, primary=False):
-        """level : ok, warn, update (mise à jour disponible) ou busy (vérification en cours)."""
+        """level : ok, warn, update (mise à jour disponible) ou busy (vérification en cours).
+
+        level: ok, warn, update (update available) or busy (check in progress)."""
         self.level = level or ("ok" if ok else "warn")
         self.title, self.detail, self.primary = title, detail, primary
         if button is not None:
@@ -847,6 +887,7 @@ class StatusCard(Widget):
 
     def _btn(self, w, h):
         if not self.button:  # pas de bouton (opération en cours)
+                             # no button (operation in progress)
             return w - self.px(12), h / 2, w - self.px(12), h / 2
         tw = self.app.fonts.small.measure(self.button)
         return w - self.px(12) - tw - self.px(24), h / 2 - self.px(16), w - self.px(12), h / 2 + self.px(16)
