@@ -131,6 +131,19 @@ def parse_target(text, default_platform="twitch"):
     return _check(default_platform, text)
 
 
+def detect_platform(text):
+    """Plateforme d'un lien ou d'un préfixe explicite (« kick.com/… », « kick:… »), sinon None : un simple nom
+    de chaîne ne change pas la plateforme choisie.
+
+    Platform of a link or an explicit prefix ("kick.com/…", "kick:…"), otherwise None: a plain channel name
+    does not change the selected platform."""
+    text = (text or "").strip()
+    if not (re.match(r"^(twitch|kick|steam(?:tv)?)\s*[:/]", text, re.I) or "/" in text or "." in text):
+        return None
+    target = parse_target(text)
+    return target[0] if target else None
+
+
 def _check(platform, channel):
     channel = channel.strip().split("?")[0].split("#")[0]
     if platform not in NAME_RE or not NAME_RE[platform].match(channel):

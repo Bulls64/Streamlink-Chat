@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- **Platform pills**, as in Streamlink Launcher: the *Twitch ▾* list next to the add field is replaced by Twitch, Kick and Steam TV pills. The selected one is filled with its platform's color, the add field takes that color and names the platform (*Add a Kick chat: channel or link*), and pasting a link selects its platform by itself.
+
 ## [0.2.0] - 2026-10-20
 
 ### Added
@@ -32,6 +35,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+### Modifié
+- **Pastilles des plateformes**, comme dans Streamlink Launcher : la liste *Twitch ▾* à côté du champ d'ajout est remplacée par des pastilles Twitch, Kick et Steam TV. La pastille choisie est pleine de la couleur de sa plateforme, le champ d'ajout prend cette couleur et nomme la plateforme (*Ajouter un chat Kick : chaîne ou lien*), et coller un lien sélectionne sa plateforme tout seul.
 
 ## [0.2.0] - 2026-10-20
 

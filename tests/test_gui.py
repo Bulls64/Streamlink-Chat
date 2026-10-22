@@ -88,6 +88,14 @@ class TestGuiSmoke(unittest.TestCase):
         self.app.cfg["platform_colors"] = False
         self.assertEqual(self.app.card_colors("twitch")[0], self.app.c.surface)
         self.app.cfg["platform_colors"] = True
+        self.app.add_var.set("kick.com/xqc")
+        self.assertEqual(self.app.cfg["default_platform"], "kick")
+        self.assertTrue(self.app.pills["kick"].selected)
+        self.assertFalse(self.app.pills["twitch"].selected)
+        self.app.add_var.set("")
+        self.app.select_platform("twitch")
+        from chat import config
+        self.assertEqual(self.app.add_field.accent, config.PLATFORMS["twitch"][1:])
         self.app.open_settings()
         self.app.update()
         self.assertEqual(self.app.panel_kind, "settings")

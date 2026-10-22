@@ -509,6 +509,16 @@ class TestCommon(unittest.TestCase):
 
 
 class TestConfig(unittest.TestCase):
+    def test_detect_platform(self):
+        d = config.detect_platform
+        self.assertEqual(d("https://kick.com/xqc"), "kick")
+        self.assertEqual(d("twitch.tv/eslcs"), "twitch")
+        self.assertEqual(d("steam:dota2"), "steamtv")
+        self.assertIsNone(d("eslcs"))          # simple nom : la plateforme choisie ne change pas
+                                               # plain name: the selected platform stays
+        self.assertIsNone(d("example.com/x"))
+        self.assertIsNone(d(""))
+
     def test_parse_target(self):
         p = config.parse_target
         self.assertEqual(p("https://www.twitch.tv/ESLCS"), ("twitch", "eslcs"))
