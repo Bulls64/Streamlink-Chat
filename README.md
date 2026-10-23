@@ -12,6 +12,8 @@
 
 A lightweight chat client for **Twitch, Kick and Steam TV**, in the spirit of [Chatterino](https://chatterino.com) and in the style of [Streamlink Launcher](https://github.com/Bulls64/Streamlink-Launcher). Read any channel's chat without an account, write once logged in.
 
+**Website and documentation:** [bulls64.github.io/Streamlink-Launcher/en](https://bulls64.github.io/Streamlink-Launcher/en) · [en français](https://bulls64.github.io/Streamlink-Launcher)
+
 Pure Python + Tkinter, **no third-party dependency**.
 
 ### Features
@@ -130,6 +132,8 @@ Inspired by [Chatterino](https://chatterino.com). Emotes from [BetterTTV](https:
 ## Français
 
 Un client de chat léger pour **Twitch, Kick et Steam TV**, dans l'esprit de [Chatterino](https://chatterino.com) et dans le style de [Streamlink Launcher](https://github.com/Bulls64/Streamlink-Launcher). Lis le chat de n'importe quelle chaîne sans compte, écris une fois connecté.
+
+**Site et documentation :** [bulls64.github.io/Streamlink-Launcher](https://bulls64.github.io/Streamlink-Launcher) · [in English](https://bulls64.github.io/Streamlink-Launcher/en)
 
 Python et Tkinter uniquement, **sans aucune dépendance externe**.
 
