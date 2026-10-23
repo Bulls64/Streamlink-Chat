@@ -14,7 +14,7 @@ import time
 import tkinter as tk
 import tkinter.font as tkfont
 import webbrowser
-from collections import deque
+from collections import Counter, OrderedDict, deque
 from pathlib import Path
 from tkinter import messagebox
 
@@ -53,6 +53,13 @@ from .ui.widgets import (
 )
 
 log = logging.getLogger("streamlink_launcher")
+
+# Mémoire des emotes : les images décodées coûtent cher (une emote GIF de 60 images ≈ 1 Mo), on les plafonne
+# Emote memory: decoded images are expensive (a 60-frame GIF emote ≈ 1 MB), so they are capped
+IMAGE_CACHE = 200   # emotes gardées en mémoire au-delà de celles affichées (les moins récentes partent d'abord)
+                    # emotes kept in memory beyond the displayed ones (least recent go first)
+MAX_FRAMES = 40     # images par emote animée ; au-delà, une image sur deux, trois…
+                    # frames per animated emote; beyond that, one frame out of two, three…
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 REPO_URL = "https://github.com/Bulls64/Streamlink-Chat"
@@ -182,6 +189,8 @@ class ChatView:
         self.first_n = 1          # numéro du message affiché sur la ligne 1
                                   # number of the message shown on line 1
         self.next_n = 1
+        self.emote_urls = Counter()  # url -> nombre d'apparitions dans ce chat (emotes à garder en mémoire)
+                                     # url -> occurrences in this chat (emotes to keep in memory)
         self.lines = deque()      # messages affichés, dans l'ordre des lignes
                                   # displayed messages, in line order
         self.by_id = {}
@@ -263,6 +272,12 @@ class ChatView:
             msg = self.lines.popleft()
             if msg.id:
                 self.by_id.pop(msg.id, None)
+            for frag in msg.fragments or ():
+                if frag[0] == "emote":
+                    self.emote_urls[frag[2]] -= 1
+                    if self.emote_urls[frag[2]] <= 0:
+                        del self.emote_urls[frag[2]]
+                        self.app._anims_dirty = True
         self.first_n += excess
 
     def _insert(self, msg):
@@ -330,6 +345,9 @@ class ChatView:
 
     def _emote(self, name, url, base):
         app, t = self.app, self.text
+        if not self.emote_urls[url]:
+            app._anims_dirty = True
+        self.emote_urls[url] += 1
         img = app.emote_image(url)
         if img:
             t.image_create("end", image=img, padx=1, align="center")
@@ -444,11 +462,15 @@ class ChatApp(tk.Tk):
         self.global_emotes = {}
         self.channel_emotes = {}
         self.emote_maps = {}
-        self.images = {}            # url -> PhotoImage, False (illisible) ; absent = pas encore demandé
-                                    # url -> PhotoImage, False (unreadable); missing = not requested yet
+        self.images = OrderedDict()  # url -> PhotoImage, False (illisible) ; absent = pas encore demandé (LRU)
+                                    # url -> PhotoImage, False (unreadable); missing = not requested yet (LRU)
+        self.gifs = {}              # url -> (octets du GIF, délais) des emotes animées, décodées seulement si visibles
+                                    # url -> (GIF bytes, delays) of animated emotes, decoded only when visible
+        self._anims_dirty = False
         self.emote_names = {}
         self.anims = {}             # url -> [image affichée, [(image, délai)], index, prochain changement]
                                     # url -> [displayed image, [(image, delay)], index, next change]
+                                    # seulement pour le chat affiché / only for the displayed chat
         self.badge_images, self.badge_tags, self.badge_labels = {}, {}, {}
         self.loader = emotes.ImageLoader(config.CACHE_DIR)
         self.conns = {}
@@ -891,6 +913,7 @@ class ChatApp(tk.Tk):
     # --- view of the current chat
     def refresh_current(self):
         tab = self.current
+        self._anims_dirty = True  # animations du nouveau chat affiché / animations of the newly displayed chat
         accent = self.accent
         self.input.set_accent(accent)
         self.send_btn.set_accent(accent)
@@ -1178,6 +1201,7 @@ class ChatApp(tk.Tk):
 
         PhotoImage if ready, None if loading, False if unreadable."""
         if url in self.images:
+            self.images.move_to_end(url)
             return self.images[url]
         self.images[url] = None
         self.loader.request(url, lambda u, data: self.events.put(("call", self._image_loaded, (u, data))))
@@ -1196,20 +1220,89 @@ class ChatApp(tk.Tk):
                 if kind == "gif":
                     delays = emotes.gif_frames(data)
                     if len(delays) > 1:
-                        frames = []
-                        for i, d in enumerate(delays):
-                            frames.append((tk.PhotoImage(master=self, data=base64.b64encode(data),
-                                                         format=f"gif -index {i}"), d))
-                        self.anims[url] = [img, frames, 0, time.time() + delays[0] / 1000]
+                        # images décodées plus tard, seulement si l'emote est dans le chat affiché
+                        # frames decoded later, only if the emote is in the displayed chat
+                        self.gifs[url] = (data, delays)
+                        self._anims_dirty = True
             except tk.TclError:
                 img = False
         self.images[url] = img
         for tab in self.tabs:
             if tab.view:
                 tab.view.image_ready(url, img or None)
+        self._evict_images()
+
+    def _in_use(self):
+        """Emotes présentes dans un chat ouvert : jamais retirées de la mémoire (Tk les affiche).
+
+        Emotes present in an open chat: never removed from memory (Tk displays them)."""
+        used = set()
+        for tab in self.tabs:
+            if tab.view:
+                used.update(tab.view.emote_urls)
+        return used
+
+    def _evict_images(self):
+        """Retire les emotes les moins récemment vues au-delà de IMAGE_CACHE, sauf celles encore affichées.
+
+        Removes the least recently seen emotes beyond IMAGE_CACHE, except those still displayed."""
+        extra = len(self.images) - IMAGE_CACHE
+        if extra <= 0:
+            return
+        used = self._in_use()
+        for url in list(self.images):
+            if extra <= 0:
+                break
+            if url in used or self.images[url] is None:  # affichée, ou en cours de chargement
+                continue                                 # displayed, or loading
+            del self.images[url]
+            self.gifs.pop(url, None)
+            self.anims.pop(url, None)
+            extra -= 1
+
+    def _gif_decode(self, url):
+        """Images d'une emote animée, au plus MAX_FRAMES (les délais des images sautées s'additionnent).
+
+        Frames of an animated emote, at most MAX_FRAMES (the delays of skipped frames add up)."""
+        data, delays = self.gifs[url]
+        step = -(-len(delays) // MAX_FRAMES)
+        b64 = base64.b64encode(data)
+        frames = []
+        for i in range(0, len(delays), step):
+            img = tk.PhotoImage(master=self, data=b64, format=f"gif -index {i}")
+            frames.append((img, sum(delays[i:i + step])))
+        return frames
+
+    def _sync_anims(self):
+        """Anime seulement les emotes du chat affiché : les images des autres sont libérées.
+
+        Animates only the emotes of the displayed chat: the frames of the others are freed."""
+        self._anims_dirty = False
+        view = self.current.view if self.current else None
+        wanted = set()
+        if self.cfg["animated"] and view:
+            wanted = {u for u in view.emote_urls if u in self.gifs and self.images.get(u)}
+        for url in list(self.anims):
+            if url not in wanted:
+                img, frames = self.anims.pop(url)[:2]
+                try:  # l'emote reste sur sa première image
+                      # the emote stays on its first frame
+                    img.tk.call(img, "copy", frames[0][0], "-compositingrule", "set")
+                except tk.TclError:
+                    pass
+        now = time.time()
+        for url in wanted - self.anims.keys():
+            try:
+                frames = self._gif_decode(url)
+            except tk.TclError:
+                self.gifs.pop(url, None)
+                continue
+            self.anims[url] = [self.images[url], frames, 0, now + frames[0][1] / 1000]
 
     def _animate(self):
-        if self.cfg["animated"] and self.anims:
+        if self._anims_dirty:
+            self._sync_anims()
+        if self.anims:
             now = time.time()
             for anim in self.anims.values():
                 if now >= anim[3]:
@@ -1812,6 +1905,7 @@ class ChatApp(tk.Tk):
             if tab.history.maxlen != self.cfg["max_messages"]:
                 tab.history = deque(tab.history, maxlen=self.cfg["max_messages"])
         self.close_panel()
+        self._anims_dirty = True  # « Emotes animées » peut avoir changé / "Animated emotes" may have changed
         if rebuild:
             lang = self.cfg["language"] or core.detect_system_language()
             self.t = core.I18n(lang)
