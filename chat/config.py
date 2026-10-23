@@ -45,7 +45,7 @@ DEFAULT_CONFIG = {
     "providers": ["bttv", "ffz", "7tv"],
     "highlights": [],          # mots qui mettent un message en évidence (en plus de son propre pseudo)
                                # words that highlight a message (in addition to one's own username)
-    "max_messages": 1000,
+    "max_messages": 500,
     "accounts": {"twitch": {}, "kick": {}},
 }
 
@@ -69,7 +69,7 @@ def load():
     if cfg["font_size"] not in FONT_SIZES:
         cfg["font_size"] = 14
     if cfg["max_messages"] not in MAX_MESSAGES:
-        cfg["max_messages"] = 1000
+        cfg["max_messages"] = 500
     if cfg["default_platform"] not in PLATFORMS:
         cfg["default_platform"] = "twitch"
     for p in ("twitch", "kick"):

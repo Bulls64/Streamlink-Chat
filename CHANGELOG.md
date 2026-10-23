@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - **Platform pills**, as in Streamlink Launcher: the *Twitch ▾* list next to the add field is replaced by Twitch, Kick and Steam TV pills. The selected one is filled with its platform's color, the add field takes that color and names the platform (*Add a Kick chat: channel or link*), and pasting a link selects its platform by itself.
 
+### Fixed
+- **Much lower memory use with animated emotes and several chats.** Measured with 6 chats and 50 animated emotes each: about 1 GB before, about 140 MB now. Animated emotes only play in the displayed chat (the frames of the other chats are freed, and nothing is decoded when *Animated emotes* is off), an emote keeps at most 40 frames, and emote images no longer pile up: beyond 200, the least recently seen ones are dropped (those still on screen stay).
+- Chats now keep 500 messages by default instead of 1000 (*Settings › Display*). Existing settings are kept.
+
 ## [0.2.0] - 2026-10-20
 
 ### Added
@@ -38,6 +42,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Modifié
 - **Pastilles des plateformes**, comme dans Streamlink Launcher : la liste *Twitch ▾* à côté du champ d'ajout est remplacée par des pastilles Twitch, Kick et Steam TV. La pastille choisie est pleine de la couleur de sa plateforme, le champ d'ajout prend cette couleur et nomme la plateforme (*Ajouter un chat Kick : chaîne ou lien*), et coller un lien sélectionne sa plateforme tout seul.
+
+### Corrigé
+- **Mémoire bien plus basse avec les emotes animées et plusieurs chats.** Mesuré avec 6 chats et 50 emotes animées chacun : environ 1 Go avant, environ 140 Mo maintenant. Les emotes animées ne s'animent que dans le chat affiché (les images des autres chats sont libérées, et rien n'est décodé si *Emotes animées* est désactivé), une emote garde au plus 40 images, et les images d'emotes ne s'accumulent plus : au-delà de 200, les moins récemment vues sont retirées (celles encore à l'écran restent).
+- Les chats gardent maintenant 500 messages par défaut au lieu de 1000 (*Paramètres › Affichage*). Les réglages existants sont conservés.
 
 ## [0.2.0] - 2026-10-20
 
