@@ -12,7 +12,7 @@
   "toast_no_streamlink": "Streamlink est introuvable",
   "toast_settings_saved": "Paramètres enregistrés",
   "chat_title": "Chats",
-  "chat_add_placeholder": "Ajouter un chat : chaîne ou lien",
+  "chat_add_placeholder": "Ajouter un chat {platform} : chaîne ou lien",
   "chat_empty": "Aucun chat ouvert.\nTape un nom de chaîne ou colle un lien Twitch, Kick ou Steam TV ci-dessus.",
   "chat_bad_channel": "Nom de chaîne ou lien non reconnu",
   "chat_status_connecting": "Connexion…",

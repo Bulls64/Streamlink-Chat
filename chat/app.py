@@ -41,6 +41,7 @@ from .ui.widgets import (
     Button,
     Field,
     IconButton,
+    Pill,
     Popover,
     ScrollArea,
     Select,
@@ -453,6 +454,7 @@ class ChatApp(tk.Tk):
         self.conns = {}
         self.input_var = tk.StringVar()
         self.add_var = tk.StringVar()
+        self.add_var.trace_add("write", self._detect_added_platform)
         self._make_chat_fonts()
         self.title("Streamlink Chat")
         try:
@@ -593,16 +595,24 @@ class ChatApp(tk.Tk):
 
         row = tk.Frame(content, bg=c.bg)
         row.pack(fill="x", pady=(px(12), 0))
-        self.platform_select = Select(row, self, [(p, v[0]) for p, v in config.PLATFORMS.items()],
-                                      self.cfg["default_platform"], self._set_default_platform, height=44,
-                                      bg_key="surface", popup_width=150)
-        self.platform_select.pack(side="right", padx=(px(8), 0))
-        self.add_field = Field(row, self, self.add_var, placeholder=t("chat_add_placeholder"), icon="add",
+        pid = self.cfg["default_platform"]
+        self.add_field = Field(row, self, self.add_var, placeholder=self._add_placeholder(pid), icon="add",
                                kbd=t("kbd_enter"), ring=True, height=44, font=f.body, radius=10,
-                               accent=self.accent, bg_key="surface")
+                               accent=config.PLATFORMS[pid][1:], bg_key="surface")
         self.add_field.pack(side="left", fill="x", expand=True)
         self.add_field.entry.bind("<Return>", self._add_from_field)
         self.add_field.entry.bind("<KP_Enter>", self._add_from_field)
+        # Pastilles des plateformes, comme dans Streamlink Launcher : la choisie est pleine de sa couleur
+        # Platform pills, as in Streamlink Launcher: the selected one is filled with its color
+        pills = tk.Frame(content, bg=c.bg)
+        pills.pack(fill="x", pady=(px(10), 0))
+        self.pills = {}
+        for p, (name, color, on) in config.PLATFORMS.items():
+            pill = Pill(pills, self, name, dot=color, command=lambda p=p: self.select_platform(p),
+                        selected=p == pid, accent=(color, on))
+            pill.pack(side="left", padx=(0, px(8)))
+            self.pills[p] = pill
+        tk.Frame(content, bg=c.border, height=1).pack(fill="x", pady=(px(12), 0))
 
         self.tabs_row = tk.Frame(content, bg=c.bg, height=px(34))
         self.tabs_row.pack(fill="x", pady=(px(12), 0))
@@ -841,9 +851,31 @@ class ChatApp(tk.Tk):
         except OSError as e:
             log.warning("chat.json : %s", e)
 
-    def _set_default_platform(self, pid):
+    def _add_placeholder(self, pid):
+        return self.t("chat_add_placeholder", platform=self.platform_name(pid))
+
+    def select_platform(self, pid, save=True):
+        """Plateforme des chats ajoutés par nom : pastille, accent et texte d'aide du champ d'ajout.
+
+        Platform of chats added by name: pill, accent and hint text of the add field."""
+        if pid not in config.PLATFORMS or (pid == self.cfg["default_platform"] and not save):
+            return
         self.cfg["default_platform"] = pid
-        config.save(self.cfg)
+        for p, pill in self.pills.items():
+            pill.set_state(selected=p == pid)
+        self.add_field.set_accent(config.PLATFORMS[pid][1:])
+        self.add_field.set_placeholder(self._add_placeholder(pid))
+        self.add_field.redraw()
+        if save:
+            config.save(self.cfg)
+
+    def _detect_added_platform(self, *_):
+        """Un lien collé ou tapé dans le champ d'ajout sélectionne sa plateforme.
+
+        A link pasted or typed in the add field selects its platform."""
+        pid = config.detect_platform(self.add_var.get())
+        if pid and pid != self.cfg["default_platform"]:
+            self.select_platform(pid)
 
     def _add_from_field(self, e=None):
         target = config.parse_target(self.add_var.get(), self.cfg["default_platform"])
@@ -860,8 +892,7 @@ class ChatApp(tk.Tk):
     def refresh_current(self):
         tab = self.current
         accent = self.accent
-        for w in (self.add_field, self.input):
-            w.set_accent(accent)
+        self.input.set_accent(accent)
         self.send_btn.set_accent(accent)
         self._paint_card()
         if not tab:
