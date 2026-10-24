@@ -59,6 +59,19 @@ class TestFiles(unittest.TestCase):
                                                            # fallback to the .bak backup
         self.assertEqual(core.load_json(d / "absent.json", {"d": 0}), {"d": 0})
 
+    @unittest.skipIf(os.name == "nt", "droits POSIX / POSIX permissions only")
+    def test_saved_files_are_private(self):
+        # Le fichier (jetons) et sa copie .bak ne sont lisibles que par leur propriétaire, même s'il existait déjà ouvert à tous.
+        # The file (tokens) and its .bak copy are readable by their owner only, even if it already existed world-readable.
+        d = Path(tempfile.mkdtemp())
+        f = d / "chat.json"
+        f.write_text("{}", encoding="utf-8")
+        os.chmod(f, 0o644)
+        self.assertTrue(core.save_json(f, {"a": 1}))
+        self.assertTrue(core.save_json(f, {"a": 2}))
+        for name in ("chat.json", "chat.json.bak"):
+            self.assertEqual((d / name).stat().st_mode & 0o777, 0o600, name)
+
     def test_config_defaults(self):
         d = Path(tempfile.mkdtemp())
         (d / "chat.json").write_text(json.dumps({"theme": "pink", "quality": "8k"}), encoding="utf-8")

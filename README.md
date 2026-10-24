@@ -75,7 +75,7 @@ Writing needs your own (free) application on each platform, so that no secret is
 - **Twitch**: create an application on [dev.twitch.tv](https://dev.twitch.tv/console/apps/create) (category *Chat Bot*, client type **Public**, redirect URL `http://localhost`). Paste its **Client ID**, click *Log in to Twitch*, then enter the code shown on the twitch.tv page that opens.
 - **Kick**: create an application in Kick's developer settings (*Settings › Developer*) with the redirect URL `http://localhost:48125/callback` and the *read user info* and *write to chat* scopes. Paste its **Client ID** and **Client Secret**, then authorize it in the page that opens.
 
-Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in plain text on Linux, in your home folder). *Log out* removes them.
+Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in plain text on Linux, in your home folder, in a file only your user can read). *Log out* removes them.
 
 ### Updates
 
@@ -198,7 +198,7 @@ Des arguments ouvrent des chats directement : un lien de chaîne, ou `--open twi
 - **Twitch** : crée une application sur [dev.twitch.tv](https://dev.twitch.tv/console/apps/create) (catégorie *Chat Bot*, type de client **Public**, URL de redirection `http://localhost`). Colle son **Client ID**, clique sur *Se connecter à Twitch*, puis saisis le code affiché dans la page twitch.tv qui s'ouvre.
 - **Kick** : crée une application dans les paramètres développeur de Kick (*Paramètres › Développeur*) avec l'URL de redirection `http://localhost:48125/callback` et les autorisations *lire les infos* et *écrire dans le chat*. Colle son **Client ID** et son **Client Secret**, puis autorise-la dans la page qui s'ouvre.
 
-Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows (en clair sous Linux, dans ton dossier personnel). *Se déconnecter* les efface.
+Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows (en clair sous Linux, dans ton dossier personnel, dans un fichier lisible par ton seul utilisateur). *Se déconnecter* les efface.
 
 ### Mises à jour
 
