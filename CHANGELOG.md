@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- **Code of conduct** (`CODE_OF_CONDUCT.md`, English and French).
+
+### Fixed
+- **Kick sign-in when port 48125 is already used** by another program: the message now says so, instead of a generic failure.
+- **Fewer silent errors.** Failures that were swallowed without a trace (reading the Windows theme, the system language, the proxy, a message from a second instance, files that can't be deleted after an update, saving on exit...) are now recorded in the log (debug level), which makes problems easier to diagnose.
+
 ## [0.2.1] - 2026-10-24
 
 ### Changed
@@ -42,6 +49,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+### Ajouté
+- **Code de conduite** (`CODE_OF_CONDUCT.md`, anglais et français).
+
+### Corrigé
+- **Connexion à Kick quand le port 48125 est déjà utilisé** par un autre programme : le message le dit maintenant, au lieu d'un échec générique.
+- **Moins d'erreurs silencieuses.** Des échecs avalés sans trace (lecture du thème de Windows, de la langue du système, du proxy, d'un message d'une seconde instance, fichiers impossibles à supprimer après une mise à jour, enregistrement à la fermeture...) sont maintenant écrits dans le journal (niveau debug), ce qui facilite le diagnostic.
 
 ## [0.2.1] - 2026-10-24
 

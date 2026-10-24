@@ -10,6 +10,7 @@ Enough for the chats: text messages, fragmentation, ping/pong, clean closing, HT
 """
 import base64
 import hashlib
+import logging
 import os
 import socket
 import ssl
@@ -18,6 +19,8 @@ import threading
 import urllib.parse
 import urllib.request
 
+log = logging.getLogger("streamlink_launcher")  # même journal que le reste de l'appli
+                                                # same log as the rest of the app
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36"
 MAX_MESSAGE = 4 * 1024 * 1024  # un message de chat ne dépasse jamais ça
@@ -43,6 +46,7 @@ def _proxy_for(scheme, host):
             return None
     except Exception:  # proxy_bypass peut échouer sur des configurations Windows exotiques
                        # proxy_bypass can fail on exotic Windows configurations
+        log.debug("proxy_bypass a échoué pour %s", host, exc_info=True)
         return None
     proxies = urllib.request.getproxies()
     url = proxies.get("https" if scheme == "wss" else "http")

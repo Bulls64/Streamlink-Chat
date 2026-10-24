@@ -97,7 +97,7 @@ def system_theme():
                 value, _ = winreg.QueryValueEx(k, "AppsUseLightTheme")
             return "light" if value else "dark"
         except OSError:
-            pass
+            log.debug("Thème de Windows illisible", exc_info=True)
     return "dark"
 
 

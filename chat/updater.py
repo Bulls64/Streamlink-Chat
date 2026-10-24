@@ -200,7 +200,7 @@ def download_update(release, dest_dir, progress=None, cancel=None, opener=None):
             try:
                 dest.unlink()
             except OSError:
-                pass
+                log.debug("Fichier %s non supprimé", dest, exc_info=True)
 
 
 def _parse_authenticode(text):
@@ -309,7 +309,7 @@ def cleanup_leftovers(exe=None, tries=30, delay=1.0):
         try:
             f.unlink()
         except OSError:
-            pass
+            log.debug("Fichier %s non supprimé", f, exc_info=True)
 
 
 def relaunch(exe=None, old_version=None, extra_args=()):

@@ -202,6 +202,7 @@ def http(url, data=None, headers=None, method=None, timeout=12, form=None, opene
         try:
             detail = e.read(2000).decode("utf-8", "replace")
         except Exception:
+            log.debug("Corps de l'erreur HTTP illisible", exc_info=True)
             detail = ""
         raise HttpError(e.code, detail[:300]) from None
     if enc == "gzip":

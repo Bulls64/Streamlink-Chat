@@ -70,6 +70,7 @@
   "chat_login_browser_done": "Connexion réussie. Tu peux fermer cet onglet et revenir à Streamlink Chat.",
   "chat_login_ok": "Connecté à {platform} : {name}",
   "chat_login_failed": "Connexion à {platform} impossible",
+  "chat_login_port": "Connexion à {platform} impossible : le port {port} est déjà utilisé par un autre programme",
   "chat_auth_failed": "Session {platform} expirée : reconnecte-toi",
   "chat_system_language": "Celle du système",
   "chat_section_watch": "Regarder",

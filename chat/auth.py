@@ -150,7 +150,10 @@ def wait_for_code(state, cancel, port=KICK_PORT, timeout=300, page=b""):
         def log_message(self, *args):
             pass
 
-    server = HTTPServer(("127.0.0.1", port), Handler)
+    try:
+        server = HTTPServer(("127.0.0.1", port), Handler)
+    except OSError as e:  # port déjà pris par un autre programme
+        raise AuthError("port") from e  # port already used by another program
     server.timeout = 0.5
     deadline = time.time() + timeout
     try:

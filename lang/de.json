@@ -70,6 +70,7 @@
   "chat_login_browser_done": "Angemeldet. Du kannst diesen Tab schließen und zu Streamlink Chat zurückkehren.",
   "chat_login_ok": "Bei {platform} angemeldet: {name}",
   "chat_login_failed": "Anmeldung bei {platform} fehlgeschlagen",
+  "chat_login_port": "Anmeldung bei {platform} fehlgeschlagen: Port {port} wird bereits von einem anderen Programm verwendet",
   "chat_auth_failed": "{platform}-Sitzung abgelaufen: erneut anmelden",
   "chat_system_language": "Systemsprache",
   "chat_section_watch": "Ansehen",
