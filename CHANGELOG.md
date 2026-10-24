@@ -11,14 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-24
+
 ### Added
 - **Code of conduct** (`CODE_OF_CONDUCT.md`, English and French).
-
-### Fixed
-- **Kick sign-in when port 48125 is already used** by another program: the message now says so, instead of a generic failure.
-- **Fewer silent errors.** Failures that were swallowed without a trace (reading the Windows theme, the system language, the proxy, a message from a second instance, files that can't be deleted after an update, saving on exit...) are now recorded in the log (debug level), which makes problems easier to diagnose.
-
-## [0.2.1] - 2026-10-24
 
 ### Changed
 - **Platform pills**, as in Streamlink Launcher: the *Twitch ▾* list next to the add field is replaced by Twitch, Kick and Steam TV pills. The selected one is filled with its platform's color, the add field takes that color and names the platform (*Add a Kick chat: channel or link*), and pasting a link selects its platform by itself.
@@ -27,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Much lower memory use with animated emotes and several chats.** Measured with 6 chats and 50 animated emotes each: about 1 GB before, about 140 MB now. Animated emotes only play in the displayed chat (the frames of the other chats are freed, and nothing is decoded when *Animated emotes* is off), an emote keeps at most 40 frames, and emote images no longer pile up: beyond 200, the least recently seen ones are dropped (those still on screen stay).
 - Chats now keep 500 messages by default instead of 1000 (*Settings › Display*). Existing settings are kept.
 - **Settings file readable by you only (Linux).** `chat.json`, which holds the account tokens, and its `.bak` copy are now saved with owner-only permissions (0600), including when an older file was readable by other users: it is fixed at the next save. No change on Windows, where the tokens stay encrypted with DPAPI.
+- **Kick sign-in when port 48125 is already used** by another program: the message now says so, instead of a generic failure.
+- **Fewer silent errors.** Failures that were swallowed without a trace (reading the Windows theme, the system language, the proxy, a message from a second instance, files that can't be deleted after an update, saving on exit...) are now recorded in the log (debug level), which makes problems easier to diagnose.
 
 ## [0.2.0] - 2026-10-20
 
@@ -50,14 +48,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Non publié]
 
+## [0.2.1] - 2026-10-24
+
 ### Ajouté
 - **Code de conduite** (`CODE_OF_CONDUCT.md`, anglais et français).
-
-### Corrigé
-- **Connexion à Kick quand le port 48125 est déjà utilisé** par un autre programme : le message le dit maintenant, au lieu d'un échec générique.
-- **Moins d'erreurs silencieuses.** Des échecs avalés sans trace (lecture du thème de Windows, de la langue du système, du proxy, d'un message d'une seconde instance, fichiers impossibles à supprimer après une mise à jour, enregistrement à la fermeture...) sont maintenant écrits dans le journal (niveau debug), ce qui facilite le diagnostic.
-
-## [0.2.1] - 2026-10-24
 
 ### Modifié
 - **Pastilles des plateformes**, comme dans Streamlink Launcher : la liste *Twitch ▾* à côté du champ d'ajout est remplacée par des pastilles Twitch, Kick et Steam TV. La pastille choisie est pleine de la couleur de sa plateforme, le champ d'ajout prend cette couleur et nomme la plateforme (*Ajouter un chat Kick : chaîne ou lien*), et coller un lien sélectionne sa plateforme tout seul.
@@ -66,6 +60,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Mémoire bien plus basse avec les emotes animées et plusieurs chats.** Mesuré avec 6 chats et 50 emotes animées chacun : environ 1 Go avant, environ 140 Mo maintenant. Les emotes animées ne s'animent que dans le chat affiché (les images des autres chats sont libérées, et rien n'est décodé si *Emotes animées* est désactivé), une emote garde au plus 40 images, et les images d'emotes ne s'accumulent plus : au-delà de 200, les moins récemment vues sont retirées (celles encore à l'écran restent).
 - Les chats gardent maintenant 500 messages par défaut au lieu de 1000 (*Paramètres › Affichage*). Les réglages existants sont conservés.
 - **Fichier de réglages lisible par toi seul (Linux).** `chat.json`, qui contient les jetons des comptes, et sa copie `.bak` sont maintenant enregistrés avec les droits du seul propriétaire (0600), y compris quand un ancien fichier était lisible par les autres utilisateurs : corrigé à la prochaine sauvegarde. Rien ne change sous Windows, où les jetons restent chiffrés par DPAPI.
+- **Connexion à Kick quand le port 48125 est déjà utilisé** par un autre programme : le message le dit maintenant, au lieu d'un échec générique.
+- **Moins d'erreurs silencieuses.** Des échecs avalés sans trace (lecture du thème de Windows, de la langue du système, du proxy, d'un message d'une seconde instance, fichiers impossibles à supprimer après une mise à jour, enregistrement à la fermeture...) sont maintenant écrits dans le journal (niveau debug), ce qui facilite le diagnostic.
 
 ## [0.2.0] - 2026-10-20
 
