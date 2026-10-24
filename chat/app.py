@@ -1803,7 +1803,7 @@ class ChatApp(tk.Tk):
                 try:
                     os.remove(path)
                 except OSError:
-                    pass
+                    log.debug("Fichier %s non supprimé", path, exc_info=True)
                 raise updater.UpdateError(key)
             return path
 
@@ -1835,7 +1835,7 @@ class ChatApp(tk.Tk):
             try:
                 os.remove(result)
             except OSError:
-                pass
+                log.debug("Fichier %s non supprimé", result, exc_info=True)
             self._app_state, self._app_error = "error", e.key
             self._update_app_card()
             return
@@ -1978,7 +1978,8 @@ class ChatApp(tk.Tk):
         if isinstance(result, Exception):
             if str(result) != "cancelled":
                 log.warning("Connexion %s : %s", platform, result)
-                self.toast(t("chat_login_failed", platform=self.platform_name(platform)), "error")
+                key = "chat_login_port" if str(result) == "port" else "chat_login_failed"
+                self.toast(t(key, platform=self.platform_name(platform), port=auth.KICK_PORT), "error")
             return
         acc = self.cfg["accounts"].setdefault(platform, {})
         acc.update(result)
@@ -2035,7 +2036,7 @@ class ChatApp(tk.Tk):
                 self.cfg["geometry"] = self.geometry()
             self.save_tabs()
         except (tk.TclError, OSError):
-            pass
+            log.debug("Enregistrement à la fermeture incomplet", exc_info=True)
         for conn in self.conns.values():
             conn.stop()
         self.loader.shutdown()

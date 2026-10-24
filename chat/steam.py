@@ -48,7 +48,7 @@ def find_steamid(page):
             if STEAMID_RE.match(sid):
                 return sid
         except ValueError:
-            pass
+            log.debug("Diffusion Steam : data-broadcast illisible", exc_info=True)
     m = re.search(r'"steamid"\s*:\s*"(7656119\d{10})"', html.unescape(page))
     return m.group(1) if m else None
 
@@ -154,7 +154,7 @@ class SteamChannel(Connection):
             try:
                 msg.ts = float(m["time"])
             except (TypeError, ValueError):
-                pass
+                log.debug("Steam : horodatage invalide %r", m.get("time"))
         return msg
 
     def on_error(self, error):

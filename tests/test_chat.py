@@ -632,6 +632,19 @@ class TestAuth(unittest.TestCase):
         t.join(5)
         self.assertEqual(box["code"], "abc")
 
+    def test_local_redirect_port_busy(self):
+        # Port déjà pris : erreur claire « port » (et non une exception réseau brute).
+        # Port already used: a clear "port" error (not a raw network exception).
+        busy = socket.socket()
+        busy.bind(("127.0.0.1", 0))
+        busy.listen(1)
+        try:
+            with self.assertRaises(auth.AuthError) as cm:
+                auth.wait_for_code("st", threading.Event(), port=busy.getsockname()[1], timeout=1)
+            self.assertEqual(str(cm.exception), "port")
+        finally:
+            busy.close()
+
 
 class TestInstance(unittest.TestCase):
     def test_forward(self):

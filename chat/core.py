@@ -129,7 +129,7 @@ def save_json(path, data):
         try:
             tmp.unlink()
         except OSError:
-            pass
+            log.debug("Fichier temporaire %s non supprimé", tmp, exc_info=True)
         return False
 
 
@@ -150,6 +150,7 @@ def detect_system_language():
         code = name.lower()[:2]
         return code if code in ("fr", "es", "de", "it") else "en"
     except Exception:
+        log.debug("Langue du système introuvable", exc_info=True)
         return "en"
 
 
@@ -175,6 +176,7 @@ class I18n:
         try:
             return text.format(**kwargs)
         except Exception:
+            log.debug("Texte %r : paramètres invalides", key, exc_info=True)
             return text
 
 

@@ -70,6 +70,7 @@
   "chat_login_browser_done": "Sesión iniciada. Puedes cerrar esta pestaña y volver a Streamlink Chat.",
   "chat_login_ok": "Conectado a {platform}: {name}",
   "chat_login_failed": "No se pudo iniciar sesión en {platform}",
+  "chat_login_port": "No se pudo iniciar sesión en {platform}: el puerto {port} ya lo usa otro programa",
   "chat_auth_failed": "Sesión de {platform} caducada: vuelve a iniciar sesión",
   "chat_system_language": "La del sistema",
   "chat_section_watch": "Ver",

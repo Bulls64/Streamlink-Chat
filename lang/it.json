@@ -70,6 +70,7 @@
   "chat_login_browser_done": "Accesso riuscito. Puoi chiudere questa scheda e tornare a Streamlink Chat.",
   "chat_login_ok": "Connesso a {platform}: {name}",
   "chat_login_failed": "Accesso a {platform} non riuscito",
+  "chat_login_port": "Accesso a {platform} non riuscito: la porta {port} è già usata da un altro programma",
   "chat_auth_failed": "Sessione {platform} scaduta: accedi di nuovo",
   "chat_system_language": "Quella del sistema",
   "chat_section_watch": "Guarda",

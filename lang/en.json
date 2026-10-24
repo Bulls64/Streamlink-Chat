@@ -70,6 +70,7 @@
   "chat_login_browser_done": "Logged in. You can close this tab and go back to Streamlink Chat.",
   "chat_login_ok": "Logged in to {platform}: {name}",
   "chat_login_failed": "Couldn't log in to {platform}",
+  "chat_login_port": "Couldn't log in to {platform}: port {port} is already used by another program",
   "chat_auth_failed": "{platform} session expired: log in again",
   "chat_system_language": "System language",
   "chat_section_watch": "Watch",

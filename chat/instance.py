@@ -66,7 +66,7 @@ def serve(on_open, port=PORT):
                     conn.sendall(b"ok")
                     on_open(targets)
                 except (OSError, ValueError):
-                    pass
+                    log.debug("Message de la seconde instance illisible", exc_info=True)
     threading.Thread(target=loop, daemon=True, name="chat-instance").start()
     return srv
 
