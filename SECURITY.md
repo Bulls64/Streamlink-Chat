@@ -10,7 +10,7 @@
 
 **Good to know.**
 - The executables are **not code-signed**. Check the SHA-256 given in `SHA256SUMS.txt` and in the release.
-- Account tokens are stored in `chat.json`: encrypted with Windows DPAPI on Windows (readable only by your Windows account on this PC), in plain text on Linux (in your home folder).
+- Account tokens are stored in `chat.json`: encrypted with Windows DPAPI on Windows (readable only by your Windows account on this PC), in plain text on Linux (in your home folder, in a file only your user can read).
 - Logging in uses your own Twitch / Kick application; no secret is shipped with the program.
 
 ## Français
@@ -23,5 +23,5 @@
 
 **À savoir.**
 - Les exécutables ne sont **pas signés**. Vérifiez l'empreinte SHA-256 de `SHA256SUMS.txt` et de la release.
-- Les jetons des comptes sont enregistrés dans `chat.json` : chiffrés par DPAPI sous Windows (lisibles seulement par votre compte Windows sur ce PC), en clair sous Linux (dans votre dossier personnel).
+- Les jetons des comptes sont enregistrés dans `chat.json` : chiffrés par DPAPI sous Windows (lisibles seulement par votre compte Windows sur ce PC), en clair sous Linux (dans votre dossier personnel, dans un fichier lisible par votre seul utilisateur).
 - La connexion passe par votre propre application Twitch / Kick ; aucun secret n'est livré avec le programme.

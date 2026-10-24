@@ -89,24 +89,40 @@ def load_json(path, default):
     return default
 
 
+def _private(path):
+    """Hors Windows, réserve le fichier à son propriétaire (0600) : il peut contenir des jetons.
+
+    Outside Windows, restricts the file to its owner (0600): it may hold tokens."""
+    if os.name != "nt":
+        try:
+            os.chmod(path, 0o600)
+        except OSError as e:
+            log.warning("Droits impossibles à restreindre sur %s : %s", path, e)
+
+
 def save_json(path, data):
     """Écriture atomique (fichier temporaire puis remplacement) ; la version précédente est gardée en .bak.
+    Hors Windows, le fichier et sa copie .bak sont lisibles par leur seul propriétaire.
 
-    Atomic write (temporary file, then replacement); the previous version is kept as .bak."""
+    Atomic write (temporary file, then replacement); the previous version is kept as .bak.
+    Outside Windows, the file and its .bak copy are readable by their owner only."""
     path = Path(path)
     tmp = path.with_name(path.name + ".tmp")
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(tmp, "w", encoding="utf-8") as f:
+        with os.fdopen(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
             f.flush()
             os.fsync(f.fileno())
         if path.exists():
             try:
-                shutil.copyfile(path, path.with_name(path.name + ".bak"))
+                bak = path.with_name(path.name + ".bak")
+                shutil.copyfile(path, bak)
+                _private(bak)
             except OSError as e:
                 log.warning("Sauvegarde .bak impossible pour %s : %s", path.name, e)
         os.replace(tmp, path)
+        _private(path)
         return True
     except (OSError, TypeError, ValueError) as e:
         log.error("Enregistrement impossible de %s : %s", path, e)
