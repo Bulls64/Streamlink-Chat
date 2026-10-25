@@ -46,13 +46,13 @@ class Dummy:
 class TestGuiSmoke(unittest.TestCase):
     def setUp(self):
         from chat import app as chat_app
-        from chat import config, instance
+        from chat import app_connections, config, emotes, instance
         tmp = Path(tempfile.mkdtemp())
         self.patches = [mock.patch.object(config, "CONFIG_FILE", tmp / "chat.json"),
                         mock.patch.object(config, "CACHE_DIR", tmp / "cache"),
                         mock.patch.object(instance, "serve", lambda *a, **k: None),
-                        mock.patch.object(chat_app.emotes, "fetch_global", lambda *a, **k: {}),
-                        mock.patch.object(chat_app, "TwitchConnection", Dummy)]
+                        mock.patch.object(emotes, "fetch_global", lambda *a, **k: {}),
+                        mock.patch.object(app_connections, "TwitchConnection", Dummy)]
         for p in self.patches:
             p.start()
         self.app = chat_app.ChatApp()
@@ -137,7 +137,7 @@ class TestEmoteMemory(TestGuiSmoke):
         pass
 
     def test_animations_follow_displayed_chat(self):
-        from chat import app as chat_app
+        from chat import app_common
         app = self.app
         app.cfg["animated"] = True
         app._image_loaded(("7tv://anim", tiny_gif(100)))
@@ -149,7 +149,7 @@ class TestEmoteMemory(TestGuiSmoke):
         app.events.put(("message", self._emote_msg("eslcs", "7tv://anim")))
         self.pump()
         self.assertIn("7tv://anim", app.anims)
-        self.assertLessEqual(len(app.anims["7tv://anim"][1]), chat_app.MAX_FRAMES)
+        self.assertLessEqual(len(app.anims["7tv://anim"][1]), app_common.MAX_FRAMES)
         app.select_tab(b)  # l'emote n'est pas dans ce chat : ses images sont libérées
         self.pump()        # the emote is not in this chat: its frames are freed
         self.assertNotIn("7tv://anim", app.anims)
@@ -162,15 +162,14 @@ class TestEmoteMemory(TestGuiSmoke):
         self.assertEqual(app.anims, {})
 
     def test_image_cache_is_bounded(self):
-        from chat import app as chat_app
-        from chat import badges
+        from chat import app_media, badges
         app = self.app
         app.add_var.set("eslcs")
         app._add_from_field()
         app._image_loaded(("7tv://shown", badges.badge_png("sub", 16)))
         app.events.put(("message", self._emote_msg("eslcs", "7tv://shown")))
         self.pump()
-        with mock.patch.object(chat_app, "IMAGE_CACHE", 3):
+        with mock.patch.object(app_media, "IMAGE_CACHE", 3):
             for i in range(10):
                 app._image_loaded((f"7tv://old{i}", badges.badge_png("sub", 16)))
         self.assertLessEqual(len(app.images), 3)
