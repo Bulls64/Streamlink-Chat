@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-25
+
 ### Changed
 - **`chat/app.py` split into smaller modules** (2,063 → about 390 lines): channel tabs and chat view (`app_view.py`), tabs, connections and events, badges and emotes, sending and menus, settings, app updates and accounts, each in an `app_*.py` mixin of `ChatApp`; shared constants in `app_common.py`. The methods are moved unchanged; no change in behavior.
 
@@ -50,6 +52,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+## [0.2.2] - 2026-10-25
 
 ### Modifié
 - **`chat/app.py` découpé en modules plus petits** (2 063 → environ 390 lignes) : onglets de chaîne et vue d'un chat (`app_view.py`), onglets, connexions et événements, badges et emotes, envoi et menus, paramètres, mises à jour de l'appli et comptes, chacun dans un mixin `app_*.py` de `ChatApp` ; constantes communes dans `app_common.py`. Les méthodes sont déplacées sans modification ; aucun changement de comportement.
