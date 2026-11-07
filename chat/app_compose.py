@@ -140,6 +140,47 @@ class ComposeMixin:
             self.toast(t("chat_copied"))
         self.popover.show(self._anchor_at(e), items, pick, width=self.px(240))
 
+    def open_chat_link(self, e, url):
+        """Lien cliqué dans le chat : s'ouvre directement sur les sites des plateformes et les sites approuvés,
+        sinon un menu montre le site avant de l'ouvrir.
+
+        Link clicked in the chat: opens directly on the platforms' sites and approved sites,
+        otherwise a menu shows the site before opening it."""
+        host = config.link_host(url)
+        if not self.cfg["link_confirm"] or config.link_trusted(host, self.cfg["trusted_links"]):
+            self.open_url(url)
+            return
+        t, width = self.t, self.px(340)
+        avail = width - self.px(62)  # marges et icône du menu / menu margins and icon
+
+        def label(key):
+            # Si le nom du site est trop long, on coupe son début : c'est la fin qui dit à qui il appartient
+            # If the site name is too long, cut its start: the end is what says whom it belongs to
+            shown = host
+            while len(shown) > 4 and self.fonts.body.measure(t(key, host=shown)) > avail:
+                shown = "…" + shown.lstrip("…")[1:]
+            return t(key, host=shown)
+        items = [{"label": label("chat_link_open") if host else t("chat_link_open_unknown"),
+                  "icon": "link", "value": "open"}]
+        if host:
+            items.append({"label": label("chat_link_trust"), "icon": "check", "value": "trust"})
+        items += [{"label": t("chat_link_copy"), "icon": "link", "value": "copy"},
+                  {"label": t("chat_link_cancel"), "icon": "close", "value": "cancel"}]
+
+        def pick(item):
+            v = item["value"]
+            if v == "trust":
+                self.cfg["trusted_links"] = sorted(set(self.cfg["trusted_links"]) | {host})
+                config.save(self.cfg)
+                self.toast(t("chat_link_trusted", host=host))
+            if v in ("open", "trust"):
+                self.open_url(url)
+            elif v == "copy":
+                self.clipboard_clear()
+                self.clipboard_append(url)
+                self.toast(t("chat_copied"))
+        self.popover.show(self._anchor_at(e), items, pick, width=width)
+
     # =====================================================
     # Regarder / ouvrir
     # Watch / open

@@ -11,6 +11,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-07
+
+### Added
+- **Links from the chat ask before opening.** Clicking a link shows the site's name first, with *Open*, *Always open links from this site*, *Copy link* and *Cancel*. A long name is cut at its start, so the end that says whom the site belongs to stays visible. Links from Twitch, Kick and Steam, and from approved sites, open directly. *Settings › Links* turns the question off or forgets the approved sites.
+- **Warning when Kick or Steam TV keep failing.** After five unexpected failures in a row, the chat header says the site may have changed, and a message offers to check for updates (*Settings › Updates*). The automatic reconnection is unchanged; an offline channel does not count as a failure.
+
+### Fixed
+- A notification too long for the window is now shortened instead of overflowing it.
+- The version links at the end of this CHANGELOG now include 0.2.2.
+
 ## [0.2.2] - 2026-10-25
 
 ### Changed
@@ -53,6 +63,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Non publié]
 
+## [0.2.3] - 2026-11-07
+
+### Ajouté
+- **Les liens du chat demandent avant de s'ouvrir.** Un clic sur un lien montre d'abord le nom du site, avec *Ouvrir*, *Toujours ouvrir les liens de ce site*, *Copier le lien* et *Annuler*. Un nom trop long est coupé au début, pour garder visible la fin, qui dit à qui appartient le site. Les liens de Twitch, Kick et Steam, et ceux des sites approuvés, s'ouvrent directement. *Paramètres › Liens* désactive la question ou oublie les sites approuvés.
+- **Avertissement quand Kick ou Steam TV échouent sans arrêt.** Après cinq échecs inattendus de suite, l'en-tête du chat indique que le site a peut-être changé, et un message propose de chercher une mise à jour (*Paramètres › Mises à jour*). La reconnexion automatique ne change pas ; une chaîne hors ligne ne compte pas comme un échec.
+
+### Corrigé
+- Une notification trop longue pour la fenêtre est maintenant raccourcie au lieu de déborder.
+- Les liens de versions en fin de CHANGELOG comprennent maintenant la 0.2.2.
+
 ## [0.2.2] - 2026-10-25
 
 ### Modifié
@@ -89,8 +109,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Instance unique (une seconde ouverture envoie ses chats à la fenêtre déjà ouverte), cinq langues, thème clair / sombre / automatique.
 - Exécutable Windows et AppImage Linux compilés par GitHub Actions ; tests des protocoles contre de faux serveurs locaux.
 
-[Unreleased]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.1...HEAD
-[Non publié]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.3...HEAD
+[Non publié]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Bulls64/Streamlink-Chat/releases/tag/v0.1.0

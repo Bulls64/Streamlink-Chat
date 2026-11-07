@@ -488,6 +488,32 @@ class TestSteam(unittest.TestCase):
 # Common, settings, emotes, accounts
 # ---------------------
 class TestCommon(unittest.TestCase):
+    def test_failures_in_a_row(self):
+        conn = common.Connection(lambda ev: None)
+        for _ in range(conn.CHANGED_AFTER - 1):
+            conn._count_failure(OSError("reset"), 1)
+        self.assertFalse(conn.maybe_changed)
+        conn._count_failure(OSError("reset"), 1)
+        self.assertTrue(conn.maybe_changed)
+        conn._count_failure(Exception("offline"), 1)   # chaîne hors ligne : la plateforme répond
+        self.assertEqual(conn.failures, 0)              # channel offline: the platform answers
+        for _ in range(conn.CHANGED_AFTER):
+            conn._count_failure(OSError("reset"), 1)
+        conn._count_failure(OSError("reset"), 120)      # après une longue connexion, on repart de 1
+        self.assertEqual(conn.failures, 1)              # after a long connection, start again from 1
+
+    def test_kick_and_steam_report_maybe_changed(self):
+        events = []
+        k = kick.KickChannel(events.append, "xqc")
+        k.on_retry(4)
+        k.failures = k.CHANGED_AFTER
+        k.on_retry(8)
+        self.assertEqual([e[4] for e in events if e[0] == "status"], ["4", "maybe_changed"])
+        s = steam.SteamChannel(events.append, "valve")
+        s.failures = s.CHANGED_AFTER
+        s.on_retry(30)
+        self.assertEqual(events[-1][3:], ("reconnecting", "maybe_changed"))
+
     def test_split_words(self):
         frags = common.split_words("a https://t.co/x, @Bob Pog", {"Pog": "u"})
         self.assertEqual([f[0] for f in frags], ["text", "link", "text", "mention", "text", "emote"])
@@ -545,6 +571,29 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg["tabs"], [{"platform": "twitch", "channel": "a"}])
         self.assertEqual(cfg["font_size"], 14)
         self.assertEqual(cfg["accounts"]["twitch"], {})
+
+    def test_link_host_and_trusted(self):
+        self.assertEqual(config.link_host("https://www.Example.com/a?b=1"), "example.com")
+        self.assertEqual(config.link_host("http://clips.twitch.tv/x"), "clips.twitch.tv")
+        self.assertEqual(config.link_host("https://xn--pple-43d.com/"), "xn--pple-43d.com")
+        self.assertEqual(config.link_host("not a link"), "")
+        self.assertEqual(config.link_host("https://localhost/"), "")
+        self.assertTrue(config.link_trusted("clips.twitch.tv"))
+        self.assertTrue(config.link_trusted("kick.com"))
+        self.assertFalse(config.link_trusted("twitch.tv.evil.example"))
+        self.assertFalse(config.link_trusted("eviltwitch.tv"))
+        self.assertTrue(config.link_trusted("img.example.org", ["example.org"]))
+        self.assertFalse(config.link_trusted("", ["example.org"]))
+
+    def test_load_trusted_links(self):
+        d = Path(tempfile.mkdtemp())
+        f = d / "chat.json"
+        f.write_text(json.dumps({"trusted_links": ["Example.com", "www.example.com", 3, "", "bad host"],
+                                 "link_confirm": "yes"}), encoding="utf-8")
+        with mock.patch.object(config, "CONFIG_FILE", f):
+            cfg = config.load()
+        self.assertEqual(cfg["trusted_links"], ["example.com"])
+        self.assertIs(cfg["link_confirm"], True)
 
 
 class TestEmotes(unittest.TestCase):

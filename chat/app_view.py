@@ -19,6 +19,8 @@ class Tab:
         self.platform, self.channel = platform, channel
         self.title = channel
         self.status, self.detail = "connecting", ""
+        self.changed_warned = False  # avertissement « la plateforme a peut-être changé » déjà montré
+                                     # "the platform may have changed" warning already shown
         self.unread, self.mentioned = 0, False
         self.info = {}
         self.view = None
@@ -373,7 +375,7 @@ class ChatView:
         r = self.text.tag_prevrange("link", idx + "+1c")
         if r:
             url = self.text.get(*r)
-            self.app.open_url(url if "://" in url else "https://" + url)
+            self.app.open_chat_link(e, url if "://" in url else "https://" + url)
 
     def _context(self, e):
         msg = self._message_at(e)

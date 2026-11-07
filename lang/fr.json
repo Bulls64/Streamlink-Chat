@@ -117,5 +117,19 @@
   "decimal_sep": ",",
   "chat_section_updates": "Mises à jour",
   "chat_label_platform_colors": "Couleurs par plateforme",
-  "chat_hint_platform_colors": "Teinte le chat et ses onglets de la couleur de leur plateforme (violet Twitch, vert Kick, bleu nuit Steam TV)."
+  "chat_hint_platform_colors": "Teinte le chat et ses onglets de la couleur de leur plateforme (violet Twitch, vert Kick, bleu nuit Steam TV).",
+  "chat_link_open": "Ouvrir {host}",
+  "chat_link_open_unknown": "Ouvrir ce lien",
+  "chat_link_trust": "Toujours ouvrir les liens de {host}",
+  "chat_link_copy": "Copier le lien",
+  "chat_link_cancel": "Annuler",
+  "chat_link_trusted": "Les liens de {host} s'ouvriront sans demander",
+  "chat_section_links": "Liens",
+  "chat_label_link_confirm": "Demander avant d'ouvrir un lien",
+  "chat_hint_link_confirm": "Montre le site avant de l'ouvrir. Les liens de Twitch, Kick et Steam, et ceux des sites approuvés, s'ouvrent directement.",
+  "chat_label_trusted_links": "Sites approuvés : {n}",
+  "chat_label_trusted_forgotten": "Oubliés à l'enregistrement",
+  "chat_btn_forget_links": "Oublier",
+  "chat_status_maybe_changed": "Échecs répétés : le site a peut-être changé",
+  "chat_toast_maybe_changed": "{platform} ne répond plus comme prévu"
 }

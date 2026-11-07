@@ -198,7 +198,7 @@ class KickChannel(Connection):
                                    # no point in retrying
 
     def on_retry(self, delay):
-        self.status(self.slug, "reconnecting", str(delay))
+        self.status(self.slug, "reconnecting", "maybe_changed" if self.maybe_changed else str(delay))
 
     # --- négociation
     # --- negotiation

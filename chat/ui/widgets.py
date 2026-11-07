@@ -818,8 +818,11 @@ class Toast(tk.Canvas):
         self.app, self.action, self.kind = app, action, kind
         bg_ = c.text
         fg = c.bg
-        tw = f.small_semi.measure(text)
         aw = f.small_semi.measure(action[0]) + px(20) if action else 0
+        room = app.winfo_width() - px(32) - (px(16) + px(18) + aw + px(16))  # le toast tient dans la fenêtre
+        if room > px(80) and f.small_semi.measure(text) > room:                # the toast fits in the window
+            text = fit_text(f.small_semi, text, room)
+        tw = f.small_semi.measure(text)
         w = px(16) + px(18) + tw + aw + px(16)
         h = px(40)
         super().__init__(app, width=w, height=h, bg=c.bg, highlightthickness=0, bd=0)

@@ -237,11 +237,18 @@ class Connection:
     """
 
     platform = ""
+    # Erreurs normales (chaîne hors ligne, introuvable, bloquée) : elles ne comptent pas comme des échecs
+    # Normal errors (channel offline, not found, blocked): they don't count as failures
+    EXPECTED_ERRORS = ("offline", "not_found", "blocked")
+    # Après autant d'échecs de suite, la plateforme a peut-être changé son protocole
+    # After this many failures in a row, the platform may have changed its protocol
+    CHANGED_AFTER = 5
 
     def __init__(self, emit):
         self.emit = emit
         self.stop_event = threading.Event()
         self.thread = None
+        self.failures = 0  # échecs inattendus de suite / unexpected failures in a row
 
     def start(self):
         self.thread = threading.Thread(target=self._run_forever, daemon=True, name=f"chat-{self.platform}")
@@ -263,12 +270,33 @@ class Connection:
             except Exception as e:  # réseau, protocole : on retente plus tard
                                     # network, protocol: try again later
                 log.info("Chat %s : %s", self.platform, e)
+                self._count_failure(e, time.time() - started)
                 self.on_error(e)
+            else:
+                if time.time() - started > 60:
+                    self.failures = 0
             if self.stop_event.is_set():
                 break
             delay = 1 if time.time() - started > 60 else min(delay * 2, 30)
             self.on_retry(delay)
             self.stop_event.wait(delay)
+
+    def _count_failure(self, error, duration):
+        if duration > 60 or str(error) in self.EXPECTED_ERRORS:
+            self.failures = 0  # la connexion a marché, ou la plateforme a répondu normalement
+                               # the connection worked, or the platform answered normally
+        if str(error) not in self.EXPECTED_ERRORS:
+            self.failures += 1
+            if self.failures == self.CHANGED_AFTER:
+                log.warning("Chat %s : %d échecs de suite, la plateforme a peut-être changé (%s)",
+                            self.platform, self.failures, error)
+
+    @property
+    def maybe_changed(self):
+        """Vrai après plusieurs échecs inattendus de suite.
+
+        True after several unexpected failures in a row."""
+        return self.failures >= self.CHANGED_AFTER
 
     def run_once(self):
         raise NotImplementedError
