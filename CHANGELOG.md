@@ -11,6 +11,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-07
+
+### Added
+- **Twitch login without creating an application.** *Log in to Twitch* now uses Streamlink Chat's own Twitch application (a public client: no secret is shipped). The *Client ID* field becomes optional, for those who prefer their own application.
+- **Open from Streamlink Launcher.** Launcher 1.6.0 opens a Twitch or Kick favorite's chat here (right-click › *Open the chat*), or opens it with the stream; a chat already open gets the channel as a new tab.
+- **Daily check against the real platforms** (`packaging/live_check.py`, *Live check* workflow): connects read-only to Twitch, Kick and Steam TV, opens an issue when one no longer answers as expected and closes it once everything passes again.
+
+### Changed
+- **Tests**: 81 → 96, with interface flows beyond start-up (tabs, sending, history, completion, menus, settings, Twitch login and logout); coverage is measured in the CI and must stay at 65% or more (69% today).
+
 ## [0.2.3] - 2026-11-07
 
 ### Added
@@ -63,6 +73,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Non publié]
 
+## [0.3.0] - 2026-11-07
+
+### Ajouté
+- **Connexion à Twitch sans créer d'application.** *Se connecter à Twitch* utilise maintenant l'application Twitch de Streamlink Chat (un client public : aucun secret n'est livré). Le champ *Client ID* devient facultatif, pour qui préfère sa propre application.
+- **Ouverture depuis Streamlink Launcher.** Launcher 1.6.0 ouvre ici le chat d'un favori Twitch ou Kick (clic droit › *Ouvrir le chat*), ou l'ouvre avec le stream ; un chat déjà ouvert reçoit la chaîne en nouvel onglet.
+- **Vérification quotidienne contre les vraies plateformes** (`packaging/live_check.py`, workflow *Live check*) : connexion en lecture seule à Twitch, Kick et Steam TV, ticket ouvert quand l'une ne répond plus comme prévu, refermé quand tout repasse.
+
+### Modifié
+- **Tests** : 81 → 96, avec des parcours de l'interface au-delà du démarrage (onglets, envoi, historique, complétion, menus, paramètres, connexion et déconnexion Twitch) ; la couverture est mesurée en CI et doit rester à 65 % ou plus (69 % aujourd'hui).
+
 ## [0.2.3] - 2026-11-07
 
 ### Ajouté
@@ -109,8 +129,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Instance unique (une seconde ouverture envoie ses chats à la fenêtre déjà ouverte), cinq langues, thème clair / sombre / automatique.
 - Exécutable Windows et AppImage Linux compilés par GitHub Actions ; tests des protocoles contre de faux serveurs locaux.
 
-[Unreleased]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.3...HEAD
-[Non publié]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.3.0...HEAD
+[Non publié]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/Bulls64/Streamlink-Chat/compare/v0.2.0...v0.2.1

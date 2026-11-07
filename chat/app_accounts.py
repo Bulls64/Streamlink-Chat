@@ -22,6 +22,8 @@ class AccountsMixin:
     # --- accounts
     def login(self, platform, client_id, secret=""):
         t = self.t
+        if platform == "twitch" and not client_id:
+            client_id = auth.TWITCH_CLIENT_ID  # application de Streamlink Chat / Streamlink Chat's application
         if not client_id or (platform == "kick" and not secret):
             self.toast(t("chat_need_client_id"), "warn")
             return

@@ -30,6 +30,11 @@ TWITCH_DEVICE = "https://id.twitch.tv/oauth2/device"
 TWITCH_TOKEN = "https://id.twitch.tv/oauth2/token"
 TWITCH_VALIDATE = "https://id.twitch.tv/oauth2/validate"
 TWITCH_SCOPES = "chat:read chat:edit"
+# Application Twitch de Streamlink Chat (client public, sans secret) : utilisée quand l'utilisateur ne donne pas
+# son propre Client ID. Un Client ID n'est pas secret, il apparaît dans chaque adresse de connexion.
+# Streamlink Chat's Twitch application (public client, no secret): used when the user gives no Client ID
+# of their own. A Client ID is not secret, it appears in every login address.
+TWITCH_CLIENT_ID = "tbcagp94s4bp8du9b31swjye8uryp1"
 
 KICK_AUTHORIZE = "https://id.kick.com/oauth/authorize"
 KICK_TOKEN = "https://id.kick.com/oauth/token"
