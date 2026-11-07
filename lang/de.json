@@ -117,5 +117,19 @@
   "decimal_sep": ",",
   "chat_section_updates": "Updates",
   "chat_label_platform_colors": "Plattformfarben",
-  "chat_hint_platform_colors": "Färbt den Chat und seine Tabs in der Farbe ihrer Plattform (Twitch-Lila, Kick-Grün, Steam-TV-Nachtblau)."
+  "chat_hint_platform_colors": "Färbt den Chat und seine Tabs in der Farbe ihrer Plattform (Twitch-Lila, Kick-Grün, Steam-TV-Nachtblau).",
+  "chat_link_open": "{host} öffnen",
+  "chat_link_open_unknown": "Diesen Link öffnen",
+  "chat_link_trust": "Links von {host} immer öffnen",
+  "chat_link_copy": "Link kopieren",
+  "chat_link_cancel": "Abbrechen",
+  "chat_link_trusted": "Links von {host} öffnen sich ohne Nachfrage",
+  "chat_section_links": "Links",
+  "chat_label_link_confirm": "Vor dem Öffnen eines Links fragen",
+  "chat_hint_link_confirm": "Zeigt die Website vor dem Öffnen. Links von Twitch, Kick und Steam sowie von freigegebenen Websites öffnen sich direkt.",
+  "chat_label_trusted_links": "Freigegebene Websites: {n}",
+  "chat_label_trusted_forgotten": "Werden beim Speichern vergessen",
+  "chat_btn_forget_links": "Vergessen",
+  "chat_status_maybe_changed": "Wiederholte Fehler: Website geändert?",
+  "chat_toast_maybe_changed": "{platform} antwortet nicht wie erwartet"
 }

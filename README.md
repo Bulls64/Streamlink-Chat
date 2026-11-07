@@ -19,7 +19,7 @@ Pure Python + Tkinter, **no third-party dependency**.
 ### Features
 
 - **Tabs**: one tab per chat, any mix of platforms. Pick the platform with its pill, then type a channel name, or paste a link (`twitch.tv/…`, `kick.com/…`, `steam.tv/…`, `steamcommunity.com/broadcast/watch/…`). Tabs come back at the next start; unread messages and mentions show on each tab. Each chat wears its platform's color (purple Twitch, lime green Kick, navy blue Steam TV); this can be turned off.
-- **Messages**: badges, username colors adjusted to stay readable on the theme, emotes as images (Twitch, plus [BetterTTV](https://betterttv.com), [FrankerFaceZ](https://www.frankerfacez.com) and [7TV](https://7tv.app), animated GIFs included), clickable links, replies, subscriptions and other events, deleted messages and timeouts struck out.
+- **Messages**: badges, username colors adjusted to stay readable on the theme, emotes as images (Twitch, plus [BetterTTV](https://betterttv.com), [FrankerFaceZ](https://www.frankerfacez.com) and [7TV](https://7tv.app), animated GIFs included), clickable links (a link outside Twitch, Kick and Steam shows its site before opening), replies, subscriptions and other events, deleted messages and timeouts struck out.
 - **Mentions**: messages that mention your username, or words you choose, are highlighted.
 - **Comfortable reading**: scrolling up pauses the chat, *New messages* takes you back down; message time, badges, text size and history length can be changed.
 - **Writing** (Twitch and Kick): <kbd>Tab</kbd> completes usernames and emotes, <kbd>↑</kbd> recalls your last messages, right-click a username to mention it.
@@ -142,7 +142,7 @@ Python et Tkinter uniquement, **sans aucune dépendance externe**.
 ### Fonctionnalités
 
 - **Onglets** : un onglet par chat, toutes plateformes mélangées. Choisis la plateforme avec sa pastille puis tape un nom de chaîne, ou colle un lien (`twitch.tv/…`, `kick.com/…`, `steam.tv/…`, `steamcommunity.com/broadcast/watch/…`). Les onglets reviennent au démarrage suivant ; messages non lus et mentions s'affichent sur chaque onglet. Chaque chat porte la couleur de sa plateforme (violet Twitch, vert citron Kick, bleu nuit Steam TV) ; désactivable.
-- **Messages** : badges, couleurs des pseudos ajustées pour rester lisibles sur le thème, emotes en images (Twitch, plus [BetterTTV](https://betterttv.com), [FrankerFaceZ](https://www.frankerfacez.com) et [7TV](https://7tv.app), GIF animés compris), liens cliquables, réponses, abonnements et autres événements, messages supprimés et exclusions barrés.
+- **Messages** : badges, couleurs des pseudos ajustées pour rester lisibles sur le thème, emotes en images (Twitch, plus [BetterTTV](https://betterttv.com), [FrankerFaceZ](https://www.frankerfacez.com) et [7TV](https://7tv.app), GIF animés compris), liens cliquables (hors Twitch, Kick et Steam, un lien montre son site avant de s'ouvrir), réponses, abonnements et autres événements, messages supprimés et exclusions barrés.
 - **Mentions** : les messages qui citent ton pseudo, ou les mots de ton choix, sont surlignés.
 - **Lecture confortable** : remonter dans le chat met le défilement en pause, *Nouveaux messages* ramène en bas ; heure des messages, badges, taille du texte et longueur de l'historique réglables.
 - **Écriture** (Twitch et Kick) : <kbd>Tab</kbd> complète pseudos et emotes, <kbd>↑</kbd> rappelle tes derniers messages, clic droit sur un pseudo pour le mentionner.

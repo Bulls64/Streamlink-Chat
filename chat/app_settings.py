@@ -114,7 +114,7 @@ class SettingsMixin:
     def open_settings(self, section=None):
         t = self.t
         s = self.settings_state = {k: (list(v) if isinstance(v, list) else v) for k, v in self.cfg.items()
-                                   if k not in ("tabs", "accounts", "geometry", "selected")}
+                                   if k not in ("tabs", "accounts", "geometry", "selected", "trusted_links")}
         accounts = self.cfg["accounts"]
 
         def body(b):
@@ -151,6 +151,25 @@ class SettingsMixin:
                 r, self, [(n, str(n)) for n in config.MAX_MESSAGES], s["max_messages"],
                 lambda v: s.update(max_messages=v), height=36, width=110, font=self.fonts.small))
 
+            sec = self._section(b, t("chat_section_links"))
+            self._switch_row(sec, t("chat_label_link_confirm"), t("chat_hint_link_confirm"), s["link_confirm"],
+                             lambda v: s.update(link_confirm=v))
+            if self.cfg["trusted_links"]:
+                row = tk.Frame(sec, bg=self.c.panel)
+                row.pack(fill="x", pady=self.px(4))
+                info = tk.Label(row, text=t("chat_label_trusted_links", n=len(self.cfg["trusted_links"])),
+                                font=self.fonts.body, bg=self.c.panel, fg=self.c.text, anchor="w", justify="left",
+                                wraplength=self.px(220))
+                info.pack(side="left")
+
+                def forget():
+                    s["_forget_links"] = True
+                    forget_btn.destroy()
+                    info.configure(text=t("chat_label_trusted_forgotten"), fg=self.c.muted)
+                forget_btn = Button(row, self, text=t("chat_btn_forget_links"), kind="secondary", height=32,
+                                    font=self.fonts.small, command=forget)
+                forget_btn.pack(side="right")
+
             sec = self._section(b, t("chat_section_watch"))
             self._setting_row(sec, t("chat_label_quality"), lambda r: Select(
                 r, self, [(q, q) for q in core.QUALITIES], s["quality"], lambda v: s.update(quality=v), height=36,
@@ -174,6 +193,8 @@ class SettingsMixin:
                              lambda v: s.update(update_check=v))
             self._switch_row(sec, t("label_auto_update"), t("hint_auto_update"), s["auto_update"],
                              lambda v: s.update(auto_update=v))
+            if section == "updates":
+                self.after(50, lambda sec=sec: self._scroll_to(sec))
 
             sec = self._section(b, t("chat_section_accounts"))
             self.accounts_box = sec
@@ -242,6 +263,8 @@ class SettingsMixin:
         sl = s.pop("_streamlink_var", None)
         if sl is not None:
             s["streamlink_path"] = sl.get().strip()
+        if s.pop("_forget_links", False):
+            self.cfg["trusted_links"] = []
         hl = s.pop("_highlights_var", None)
         if hl is not None:
             s["highlights"] = [w.strip() for w in hl.get().split(",") if w.strip()][:30]

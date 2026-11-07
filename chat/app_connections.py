@@ -58,8 +58,10 @@ class ConnectionsMixin:
             return
         c, t = self.c, self.t
         self.header_title.configure(text=tab.title)
+        reconnecting = t("chat_status_maybe_changed") if tab.detail == "maybe_changed" \
+            else t("chat_status_reconnecting")
         status = {"connecting": (t("chat_status_connecting"), c.muted),
-                  "reconnecting": (t("chat_status_reconnecting"), c.warn),
+                  "reconnecting": (reconnecting, c.warn),
                   "error": (self._error_text(tab), c.error)}.get(tab.status)
         if tab.status == "connected":
             conn = self.conns.get(tab.platform)
@@ -222,6 +224,13 @@ class ConnectionsMixin:
         if tab is None:
             return
         if kind == "status":
+            if ev[3] == "connected":
+                tab.changed_warned = False
+            elif ev[4] == "maybe_changed" and not tab.changed_warned:
+                tab.changed_warned = True
+                self.toast(self.t("chat_toast_maybe_changed", platform=self.platform_name(platform)), "warn",
+                           action=(self.t("chat_section_updates"), lambda: self.open_settings("updates")),
+                           duration=8000)
             tab.status, tab.detail = ev[3], ev[4]
             w = self.tab_widgets.get(tab.key)
             if w:

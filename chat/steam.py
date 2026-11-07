@@ -163,7 +163,7 @@ class SteamChannel(Connection):
     def on_retry(self, delay):
         # Hors ligne : on revérifie toutes les 30 s
         # Offline: check again every 30 s
-        self.status(self.name, "reconnecting", str(delay))
+        self.status(self.name, "reconnecting", "maybe_changed" if self.maybe_changed else str(delay))
 
 
 class SteamManager:

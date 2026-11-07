@@ -46,6 +46,10 @@ DEFAULT_CONFIG = {
     "highlights": [],          # mots qui mettent un message en évidence (en plus de son propre pseudo)
                                # words that highlight a message (in addition to one's own username)
     "max_messages": 500,
+    "link_confirm": True,      # demande avant d'ouvrir un lien du chat (hors sites des plateformes et sites approuvés)
+                               # asks before opening a chat link (except the platforms' sites and approved sites)
+    "trusted_links": [],       # sites dont les liens s'ouvrent sans demander ("example.com")
+                               # sites whose links open without asking ("example.com")
     "accounts": {"twitch": {}, "kick": {}},
 }
 
@@ -72,6 +76,7 @@ def load():
         cfg["max_messages"] = 500
     if cfg["default_platform"] not in PLATFORMS:
         cfg["default_platform"] = "twitch"
+    cfg["trusted_links"] = sorted({h for h in (link_host("https://" + str(x)) for x in cfg["trusted_links"]) if h})[:200]
     for p in ("twitch", "kick"):
         if not isinstance(cfg["accounts"].get(p), dict):
             cfg["accounts"][p] = {}
@@ -182,3 +187,33 @@ def targets_from_argv(argv):
         if target:
             out.append(target)
     return out
+
+
+# ---------------------
+# Liens du chat
+# Chat links
+# ---------------------
+# Sites des plateformes : leurs liens s'ouvrent sans demander
+# The platforms' sites: their links open without asking
+PLATFORM_LINK_HOSTS = ("twitch.tv", "kick.com", "steamcommunity.com", "steam.tv", "steampowered.com")
+
+
+def link_host(url):
+    """Nom d'hôte d'un lien, en minuscules et sans « www. » ; "" s'il n'y en a pas.
+
+    Host name of a link, in lowercase and without "www."; "" if there is none."""
+    try:
+        host = urllib.parse.urlsplit(url.strip()).hostname or ""
+    except ValueError:
+        return ""
+    host = host.rstrip(".")
+    if host.startswith("www."):
+        host = host[4:]
+    return host if "." in host and re.fullmatch(r"[a-z0-9.-]+", host) else ""
+
+
+def link_trusted(host, trusted=()):
+    """Vrai si le lien s'ouvre sans demander : site d'une plateforme ou approuvé (sous-domaines compris).
+
+    True if the link opens without asking: a platform's site or an approved one (subdomains included)."""
+    return bool(host) and any(host == d or host.endswith("." + d) for d in (*PLATFORM_LINK_HOSTS, *trusted))

@@ -174,3 +174,74 @@ class TestEmoteMemory(TestGuiSmoke):
                 app._image_loaded((f"7tv://old{i}", badges.badge_png("sub", 16)))
         self.assertLessEqual(len(app.images), 3)
         self.assertIn("7tv://shown", app.images)  # encore affichée : gardée / still displayed: kept
+
+
+@unittest.skipUnless(HAVE_DISPLAY, "pas d'écran ou de Tk disponible")
+class TestLinksAndStatus(TestGuiSmoke):
+    """Liens du chat (confirmation, sites approuvés) et avertissement après des échecs répétés.
+
+    Chat links (confirmation, approved sites) and the warning after repeated failures."""
+
+    def test_open_chat_show_messages_settings_theme(self):  # déjà couvert par TestGuiSmoke / covered above
+        pass
+
+    def _event(self):
+        from types import SimpleNamespace
+        app = self.app
+        return SimpleNamespace(x_root=app.winfo_rootx() + 40, y_root=app.winfo_rooty() + 40)
+
+    def test_link_confirmation(self):
+        app = self.app
+        opened = []
+        # toast remplacé : le tearDown annule les tâches « after » avant de détruire la fenêtre
+        # toast replaced: tearDown cancels the "after" jobs before destroying the window
+        with mock.patch.object(app, "open_url", opened.append), mock.patch.object(app, "toast") as toast:
+            app.open_chat_link(self._event(), "https://clips.twitch.tv/abc")
+            self.assertEqual(opened, ["https://clips.twitch.tv/abc"])  # site d'une plateforme : direct
+            self.assertFalse(app.popover.is_open)                      # a platform's site: direct
+            app.open_chat_link(self._event(), "https://www.example.com/x")
+            self.assertTrue(app.popover.is_open)
+            values = [i["value"] for i in app.popover.items]
+            self.assertEqual(values, ["open", "trust", "copy", "cancel"])
+            self.assertIn("example.com", app.popover.items[0]["label"])
+            app.popover.pick(values.index("cancel"))
+            self.assertEqual(len(opened), 1)
+            app.open_chat_link(self._event(), "https://www.example.com/x")
+            app.popover.pick(1)                                        # toujours ouvrir / always open
+            self.assertEqual(app.cfg["trusted_links"], ["example.com"])
+            toast.assert_called_once()
+            self.assertEqual(opened[-1], "https://www.example.com/x")
+            app.open_chat_link(self._event(), "https://img.example.com/y")
+            self.assertFalse(app.popover.is_open)
+            self.assertEqual(opened[-1], "https://img.example.com/y")
+            long_host = "paypal.com." + "x" * 60 + ".example.net"
+            app.open_chat_link(self._event(), f"https://{long_host}/")
+            label = app.popover.items[0]["label"]
+            self.assertTrue(label.endswith("example.net"), label)     # la fin du nom reste visible
+            app.popover.close()                                        # the end of the name stays visible
+            app.cfg["link_confirm"] = False
+            app.open_chat_link(self._event(), "https://other.example.org/")
+            self.assertEqual(opened[-1], "https://other.example.org/")
+        app.open_settings()
+        app.update()
+        self.assertEqual(app.panel_kind, "settings")
+
+    def test_maybe_changed_warning(self):
+        app = self.app
+        app.add_var.set("eslcs")
+        app._add_from_field()
+        self.pump()
+        tab = app.current
+        with mock.patch.object(app, "toast") as toast:
+            for _ in range(3):
+                app.events.put(("status", "twitch", "eslcs", "connecting", ""))
+                app.events.put(("status", "twitch", "eslcs", "reconnecting", "maybe_changed"))
+                self.pump()
+            self.assertEqual(toast.call_count, 1)                      # un seul avertissement / a single warning
+            self.assertIn(app.t("chat_status_maybe_changed"), app.header_status.cget("text"))
+            app.events.put(("status", "twitch", "eslcs", "connected", "ro"))
+            app.events.put(("status", "twitch", "eslcs", "reconnecting", "maybe_changed"))
+            self.pump()
+            self.assertEqual(toast.call_count, 2)                      # de nouveau après une reconnexion réussie
+        self.assertEqual(tab.detail, "maybe_changed")                  # again after a successful reconnection
+
