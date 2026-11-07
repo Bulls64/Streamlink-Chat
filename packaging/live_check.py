@@ -33,6 +33,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from chat import kick, steam, twitch
+from chat.common import HttpError, http
 
 CHANNELS = {
     "twitch": ["kaicenat", "ibai", "xqc", "eslcs", "shroud"],
@@ -107,6 +108,42 @@ def check_steamtv(channel):
     return passed, f"steamid={steamid or '-'}, connecté={ok}, messages={n}" + (f", erreur={err}" if err else "")
 
 
+def _step(label, func):
+    """Une étape du diagnostic : « libellé : OK (aperçu) » ou « libellé : HTTP 403 … ».
+
+    One diagnostic step: "label: OK (preview)" or "label: HTTP 403 …"."""
+    try:
+        result = func()
+    except HttpError as e:
+        return None, f"{label} : {e}"[:240]
+    except Exception as e:  # réseau, JSON invalide… / network, invalid JSON…
+        return None, f"{label} : {e!r}"[:240]
+    return result, f"{label} : OK"
+
+
+def diagnose_kick(channel):
+    """Où Kick bloque-t-il ? Rejoue chaque étape de la connexion et dit laquelle échoue.
+
+    Where does Kick block? Replays each connection step and says which one fails."""
+    out = []
+    info, line = _step("chaîne", lambda: kick.resolve_channel(channel))
+    out.append(line)
+    if not info:
+        return " | ".join(out)
+    body = {"client": {"type": "web", "id": "live-check"}, "accepted_providers": ["pusher", "centrifugo"]}
+    data, line = _step("négociation", lambda: http(
+        kick.NEGOTIATE_URL.format(channel_id=info["channel_id"]), data=body, headers=kick.HEADERS, method="POST"))
+    found = kick.find_endpoints(data) if data is not None else []
+    out.append(line + (f" ({', '.join(str(e.get('provider')) for e in found) or 'aucun point d accès'})"
+                       if data is not None else ""))
+    data, line = _step("jeton", lambda: http(kick.AUTH_URL, data={"client": body["client"]},
+                                             headers=kick.HEADERS, method="POST"))
+    out.append(line + (f" ({'jeton trouvé' if kick.find_token(data) else 'pas de jeton'}; "
+                       f"clés : {', '.join(sorted(data)) if isinstance(data, dict) else type(data).__name__})"
+                       if data is not None else ""))
+    return " | ".join(out)
+
+
 CHECKS = {"twitch": check_twitch, "kick": check_kick, "steamtv": check_steamtv}
 
 
@@ -119,11 +156,18 @@ def main(argv=None):
     lines, failed = ["| Plateforme | Résultat | Détail |", "|---|---|---|"], []
     for platform in platforms:
         tried = []
+        diagnosed = False
         for channel in CHANNELS[platform]:
             try:
                 passed, detail = CHECKS[platform](channel)
             except Exception as e:  # le script doit toujours finir son résumé / the script must always finish
                 passed, detail = False, f"exception : {e!r}"
+            if not passed and platform == "kick" and not diagnosed:
+                diagnosed = True
+                try:
+                    detail += f" ; diagnostic : {diagnose_kick(channel)}"
+                except Exception as e:  # le diagnostic ne doit jamais casser le check / must never break the check
+                    detail += f" ; diagnostic impossible : {e!r}"
             tried.append(f"{channel} ({detail})")
             print(f"{platform:8} {channel:15} {'OK' if passed else 'échec'} : {detail}", flush=True)
             if passed:
