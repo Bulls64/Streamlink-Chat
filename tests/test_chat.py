@@ -648,6 +648,13 @@ class TestBadges(unittest.TestCase):
 
 
 class TestAuth(unittest.TestCase):
+    def test_builtin_twitch_client_id(self):
+        """L'application Twitch de Streamlink Chat est livrée (client public : un identifiant, pas de secret).
+
+        Streamlink Chat's Twitch application is shipped (public client: an identifier, no secret)."""
+        import re
+        self.assertRegex(auth.TWITCH_CLIENT_ID, re.compile(r"^[a-z0-9]{30}$"))
+
     def test_pkce(self):
         verifier, challenge = auth.pkce_pair()
         expected = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()

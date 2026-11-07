@@ -34,7 +34,7 @@ TWITCH_SCOPES = "chat:read chat:edit"
 # son propre Client ID. Un Client ID n'est pas secret, il apparaît dans chaque adresse de connexion.
 # Streamlink Chat's Twitch application (public client, no secret): used when the user gives no Client ID
 # of their own. A Client ID is not secret, it appears in every login address.
-TWITCH_CLIENT_ID = ""
+TWITCH_CLIENT_ID = "tbcagp94s4bp8du9b31swjye8uryp1"
 
 KICK_AUTHORIZE = "https://id.kick.com/oauth/authorize"
 KICK_TOKEN = "https://id.kick.com/oauth/token"

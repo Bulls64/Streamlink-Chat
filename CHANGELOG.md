@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Daily check against the real platforms** (`packaging/live_check.py`, *Live check* workflow): connects read-only to Twitch, Kick and Steam TV, opens an issue when one no longer answers as expected and closes it once everything passes again.
 
 ### Changed
-- **Tests**: 81 → 95, with interface flows beyond start-up (tabs, sending, history, completion, menus, settings, Twitch login and logout); coverage is measured in the CI and must stay at 65% or more (69% today).
+- **Tests**: 81 → 96, with interface flows beyond start-up (tabs, sending, history, completion, menus, settings, Twitch login and logout); coverage is measured in the CI and must stay at 65% or more (69% today).
 
 ## [0.2.3] - 2026-11-07
 
@@ -81,7 +81,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Vérification quotidienne contre les vraies plateformes** (`packaging/live_check.py`, workflow *Live check*) : connexion en lecture seule à Twitch, Kick et Steam TV, ticket ouvert quand l'une ne répond plus comme prévu, refermé quand tout repasse.
 
 ### Modifié
-- **Tests** : 81 → 95, avec des parcours de l'interface au-delà du démarrage (onglets, envoi, historique, complétion, menus, paramètres, connexion et déconnexion Twitch) ; la couverture est mesurée en CI et doit rester à 65 % ou plus (69 % aujourd'hui).
+- **Tests** : 81 → 96, avec des parcours de l'interface au-delà du démarrage (onglets, envoi, historique, complétion, menus, paramètres, connexion et déconnexion Twitch) ; la couverture est mesurée en CI et doit rester à 65 % ou plus (69 % aujourd'hui).
 
 ## [0.2.3] - 2026-11-07
 
