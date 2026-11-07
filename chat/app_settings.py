@@ -243,7 +243,10 @@ class SettingsMixin:
             Button(box, self, text=t("chat_logout"), kind="secondary", height=36,
                    command=lambda: self.logout(platform)).pack(anchor="w", pady=(px(8), 0))
             return
-        cid = self._field(box, acc.get("client_id", ""), placeholder=t("chat_client_id"))
+        builtin = platform == "twitch" and auth.TWITCH_CLIENT_ID
+        saved = acc.get("client_id", "")
+        cid = self._field(box, "" if builtin and saved == auth.TWITCH_CLIENT_ID else saved,
+                          placeholder=t("chat_client_id_optional") if builtin else t("chat_client_id"))
         secret = None
         if platform == "kick":
             secret = self._field(box, acc.get("client_secret", ""), placeholder=t("chat_client_secret"),
@@ -252,7 +255,9 @@ class SettingsMixin:
                accent=config.PLATFORMS[platform][1:], height=36,
                command=lambda: self.login(platform, cid.get().strip(), secret.get().strip() if secret else "")
                ).pack(anchor="w", pady=(px(8), 0))
-        if platform == "twitch":
+        if builtin:
+            self._hint(box, t("chat_hint_twitch_builtin"))
+        elif platform == "twitch":
             self._hint(box, t("chat_hint_twitch_app"), link="https://dev.twitch.tv/console/apps/create")
         else:
             self._hint(box, t("chat_hint_kick_app", redirect=auth.KICK_REDIRECT),

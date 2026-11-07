@@ -1,0 +1,14 @@
+# Mesure de couverture des tests (CI : job « Coverage »)
+# Test coverage measurement (CI: "Coverage" job)
+[run]
+source = chat
+branch = true
+omit = chat/__pycache__/*
+
+[report]
+show_missing = false
+skip_covered = false
+precision = 0
+# Seuil sous lequel la CI échoue (mesure du 7 novembre 2026 : 69 %)
+# Threshold below which the CI fails (measured on 7 November 2026: 69%)
+fail_under = 65

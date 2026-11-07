@@ -131,5 +131,7 @@
   "chat_label_trusted_forgotten": "Se olvidarán al guardar",
   "chat_btn_forget_links": "Olvidar",
   "chat_status_maybe_changed": "Fallos repetidos: ¿cambió el sitio?",
-  "chat_toast_maybe_changed": "{platform} no responde como se esperaba"
+  "chat_toast_maybe_changed": "{platform} no responde como se esperaba",
+  "chat_client_id_optional": "Client ID (opcional)",
+  "chat_hint_twitch_builtin": "Haz clic en «Iniciar sesión en Twitch»: se usa la aplicación de Streamlink Chat, no hay nada que crear. Para usar tu propia aplicación de Twitch, pega su Client ID."
 }

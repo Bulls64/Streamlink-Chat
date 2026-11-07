@@ -131,5 +131,7 @@
   "chat_label_trusted_forgotten": "Forgotten when you save",
   "chat_btn_forget_links": "Forget",
   "chat_status_maybe_changed": "Repeated failures: the site may have changed",
-  "chat_toast_maybe_changed": "{platform} isn't answering as expected"
+  "chat_toast_maybe_changed": "{platform} isn't answering as expected",
+  "chat_client_id_optional": "Client ID (optional)",
+  "chat_hint_twitch_builtin": "Click “Log in to Twitch”: Streamlink Chat's own application is used, nothing to create. To use your own Twitch application, paste its Client ID."
 }

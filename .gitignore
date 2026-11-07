@@ -20,3 +20,8 @@ packaging/appimage/.cache/
 *.exe
 *.AppImage
 *.zip
+
+# Mesure de couverture (coverage)
+.coverage
+.coverage.*
+htmlcov/

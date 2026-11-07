@@ -70,10 +70,10 @@ Arguments open chats directly: a channel link, or `--open twitch:channel --open 
 
 ### Writing in chats
 
-Writing needs your own (free) application on each platform, so that no secret is shipped with the program. *Settings › Accounts*:
+*Settings › Accounts*:
 
-- **Twitch**: create an application on [dev.twitch.tv](https://dev.twitch.tv/console/apps/create) (category *Chat Bot*, client type **Public**, redirect URL `http://localhost`). Paste its **Client ID**, click *Log in to Twitch*, then enter the code shown on the twitch.tv page that opens.
-- **Kick**: create an application in Kick's developer settings (*Settings › Developer*) with the redirect URL `http://localhost:48125/callback` and the *read user info* and *write to chat* scopes. Paste its **Client ID** and **Client Secret**, then authorize it in the page that opens.
+- **Twitch**: click *Log in to Twitch*, then enter the code shown on the twitch.tv page that opens. Streamlink Chat's own Twitch application is used: a public client, with no secret shipped in the program. To use your own instead, create one on [dev.twitch.tv](https://dev.twitch.tv/console/apps/create) (category *Chat Bot*, client type **Public**, redirect URL `http://localhost`) and paste its **Client ID** first.
+- **Kick**: Kick's login needs a secret, so you create your own (free) application, and no secret is shipped with the program. Create it in Kick's developer settings (*Settings › Developer*) with the redirect URL `http://localhost:48125/callback` and the *read user info* and *write to chat* scopes. Paste its **Client ID** and **Client Secret**, then authorize it in the page that opens.
 
 Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in plain text on Linux, in your home folder, in a file only your user can read). *Log out* removes them.
 
@@ -121,7 +121,9 @@ Streamlink Chat connects only to: the chats themselves (Twitch IRC, Kick at `kic
 python -m unittest discover -s tests -v
 ```
 
-The protocol tests run against local fake Twitch, Kick and Steam servers (no Internet needed). They run on Windows and Linux at every push, with `ruff` and a GUI smoke test.
+The protocol tests run against local fake Twitch, Kick and Steam servers (no Internet needed). They run on Windows and Linux at every push, with `ruff`, interface tests under Xvfb and a coverage measurement (`.coveragerc`, minimum 65%).
+
+A separate daily check, `packaging/live_check.py` (workflow *Live check*), connects read-only to the real Twitch, Kick and Steam TV, and opens an issue if a platform no longer answers as expected.
 
 ### Credits
 
@@ -193,10 +195,10 @@ Des arguments ouvrent des chats directement : un lien de chaîne, ou `--open twi
 
 ### Écrire dans les chats
 
-Écrire demande ta propre application (gratuite) sur chaque plateforme, pour qu'aucun secret ne soit livré avec le programme. *Paramètres › Comptes* :
+*Paramètres › Comptes* :
 
-- **Twitch** : crée une application sur [dev.twitch.tv](https://dev.twitch.tv/console/apps/create) (catégorie *Chat Bot*, type de client **Public**, URL de redirection `http://localhost`). Colle son **Client ID**, clique sur *Se connecter à Twitch*, puis saisis le code affiché dans la page twitch.tv qui s'ouvre.
-- **Kick** : crée une application dans les paramètres développeur de Kick (*Paramètres › Développeur*) avec l'URL de redirection `http://localhost:48125/callback` et les autorisations *lire les infos* et *écrire dans le chat*. Colle son **Client ID** et son **Client Secret**, puis autorise-la dans la page qui s'ouvre.
+- **Twitch** : clique sur *Se connecter à Twitch*, puis saisis le code affiché dans la page twitch.tv qui s'ouvre. L'application Twitch de Streamlink Chat est utilisée : un client public, sans aucun secret livré dans le programme. Pour utiliser la tienne, crée-la sur [dev.twitch.tv](https://dev.twitch.tv/console/apps/create) (catégorie *Chat Bot*, type de client **Public**, URL de redirection `http://localhost`) et colle d'abord son **Client ID**.
+- **Kick** : la connexion de Kick demande un secret, donc tu crées ta propre application (gratuite), et aucun secret n'est livré avec le programme. Crée-la dans les paramètres développeur de Kick (*Paramètres › Développeur*) avec l'URL de redirection `http://localhost:48125/callback` et les autorisations *lire les infos* et *écrire dans le chat*. Colle son **Client ID** et son **Client Secret**, puis autorise-la dans la page qui s'ouvre.
 
 Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows (en clair sous Linux, dans ton dossier personnel, dans un fichier lisible par ton seul utilisateur). *Se déconnecter* les efface.
 
@@ -244,7 +246,9 @@ Streamlink Chat ne se connecte qu'aux chats eux-mêmes (IRC Twitch, Kick via `ki
 python -m unittest discover -s tests -v
 ```
 
-Les tests des protocoles tournent contre de faux serveurs Twitch, Kick et Steam locaux (pas besoin d'Internet). Ils tournent sous Windows et Linux à chaque push, avec `ruff` et un test de fumée de l'interface.
+Les tests des protocoles tournent contre de faux serveurs Twitch, Kick et Steam locaux (pas besoin d'Internet). Ils tournent sous Windows et Linux à chaque push, avec `ruff`, des tests de l'interface sous Xvfb et une mesure de couverture (`.coveragerc`, 65 % minimum).
+
+Une vérification quotidienne à part, `packaging/live_check.py` (workflow *Live check*), se connecte en lecture seule aux vrais Twitch, Kick et Steam TV, et ouvre un ticket si une plateforme ne répond plus comme prévu.
 
 ### Crédits
 

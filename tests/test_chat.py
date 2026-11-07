@@ -718,3 +718,51 @@ def _free_port():
 if __name__ == "__main__":
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
     unittest.main()
+
+
+class TestLiveCheck(unittest.TestCase):
+    """Lecture des événements par packaging/live_check.py (la vérification quotidienne contre les vrais services).
+
+    Event reading by packaging/live_check.py (the daily check against the real services)."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("live_check", ROOT / "packaging" / "live_check.py")
+        cls.lc = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.lc)
+
+    def events(self, *evs):
+        q = queue.Queue()
+        for ev in evs:
+            q.put(ev)
+        return q
+
+    def test_connected_with_message(self):
+        msg = common.ChatMessage("kick", "xqc", text="hi")
+        q = self.events(("status", "kick", "xqc", "connecting", ""), ("status", "kick", "xqc", "connected", "ro"),
+                        ("message", msg))
+        self.assertEqual(self.lc._watch(q, "xqc", True, time.time() + 5), (True, 1, ""))
+
+    def test_offline_answer_without_message(self):
+        q = self.events(("status", "steamtv", "esl", "error", "offline"))
+        self.assertEqual(self.lc._watch(q, "esl", False, time.time() + 5), (False, 0, "offline"))
+
+    def test_silence_times_out(self):
+        q = self.events(("status", "kick", "xqc", "connected", "ro"))
+        with mock.patch.object(self.lc, "MESSAGE_TIMEOUT", 1):
+            ok, n, _ = self.lc._watch(q, "xqc", True, time.time() + 5)
+        self.assertEqual((ok, n), (True, 0))
+
+    def test_summary_and_exit_code(self):
+        out = Path(tempfile.mkdtemp()) / "s.md"
+        checks = {"twitch": lambda ch: (True, "ok"), "kick": lambda ch: (False, "down"),
+                  "steamtv": lambda ch: (ch == "dota2", "x")}
+        with mock.patch.dict(self.lc.CHECKS, checks), mock.patch("builtins.print"):
+            code = self.lc.main(["--summary", str(out)])
+        text = out.read_text(encoding="utf-8")
+        self.assertEqual(code, 1)
+        self.assertIn("| twitch | OK |", text)
+        self.assertIn("| kick | échec |", text)
+        self.assertIn("| steamtv | OK |", text)
+

@@ -245,3 +245,198 @@ class TestLinksAndStatus(TestGuiSmoke):
             self.assertEqual(toast.call_count, 2)                      # de nouveau après une reconnexion réussie
         self.assertEqual(tab.detail, "maybe_changed")                  # again after a successful reconnection
 
+
+class Writer(Dummy):
+    """Connexion factice connectée à un compte : garde les messages envoyés et les renvoie en écho.
+
+    Fake connection logged in to an account: keeps the sent messages and echoes them back."""
+    can_send = True
+
+    def __init__(self, emit, *a, **k):
+        super().__init__(emit)
+        self.sent = []
+
+    def join(self, ch):
+        self.emit(("status", "twitch", ch, "connected", "rw"))
+
+    def send_message(self, channel, text):
+        from chat.common import ChatMessage, split_words
+        self.sent.append((channel, text))
+        return ChatMessage("twitch", channel, text=text, user="me", display_name="Me", fragments=split_words(text))
+
+
+@unittest.skipUnless(HAVE_DISPLAY, "pas d'écran ou de Tk disponible")
+class TestGuiFlows(TestGuiSmoke):
+    """Parcours de l'interface au-delà du démarrage : onglets, envoi, complétion, menus, paramètres.
+
+    Interface flows beyond start-up: tabs, sending, completion, menus, settings."""
+
+    def test_open_chat_show_messages_settings_theme(self):  # déjà couvert par TestGuiSmoke / covered above
+        pass
+
+    def _event(self):
+        from types import SimpleNamespace
+        app = self.app
+        return SimpleNamespace(x_root=app.winfo_rootx() + 40, y_root=app.winfo_rooty() + 40, keysym="a")
+
+    def test_tabs_cycle_close_and_persist(self):
+        from chat import config
+        app = self.app
+        for ch in ("eslcs", "gotaga", "ibai"):
+            app.open_tab("twitch", ch)
+        self.pump()
+        self.assertEqual(app.current.channel, "ibai")
+        app.cycle_tab(1)                      # après le dernier, on revient au premier / after the last, back to first
+        self.assertEqual(app.current.channel, "eslcs")
+        app.cycle_tab(-1)
+        self.assertEqual(app.current.channel, "ibai")
+        app.close_tab(app.current)
+        self.pump()
+        self.assertEqual([t.channel for t in app.tabs], ["eslcs", "gotaga"])
+        self.assertEqual(app.current.channel, "gotaga")
+        saved = [t["channel"] for t in config.load()["tabs"]]
+        self.assertEqual(saved, ["eslcs", "gotaga"])
+        app.open_tab("twitch", "eslcs")       # déjà ouvert : sélectionné, pas dupliqué / already open: selected, not duplicated
+        self.assertEqual(len(app.tabs), 2)
+        self.assertEqual(app.current.channel, "eslcs")
+        for tab in list(app.tabs):
+            app.close_tab(tab)
+        self.pump()
+        self.assertIsNone(app.current)
+        self.assertEqual(config.load()["tabs"], [])
+
+    def test_send_recall_and_complete(self):
+        app = self.app
+        writer = Writer(app.events.put)
+        app.conns["twitch"] = writer
+        tab = app.open_tab("twitch", "eslcs")
+        self.pump()
+        self.assertEqual(tab.status, "connected")
+        app.input_var.set("  bonjour le chat  ")
+        app.send()
+        self.pump()
+        self.assertEqual(writer.sent, [("eslcs", "bonjour le chat")])
+        self.assertEqual(app.input_var.get(), "")
+        self.assertIn("Me: bonjour le chat", tab.view.text.get("1.0", "end"))
+        app.input_var.set("")
+        app.send()                            # message vide : rien n'est envoyé / empty message: nothing is sent
+        self.assertEqual(len(writer.sent), 1)
+        app._recall(-1)
+        self.assertEqual(app.input_var.get(), "bonjour le chat")
+        app._recall(1)
+        self.assertEqual(app.input_var.get(), "")
+        tab.chatters.update({"annie": "Annie", "anna": "Anna", "bob": "Bob"})
+        app.input_var.set("salut @an")
+        app.input.entry.icursor("end")
+        app._tab_complete(None)
+        self.assertEqual(app.input_var.get(), "salut @Anna ")
+        app._tab_complete(None)               # Tab de nouveau : candidat suivant / Tab again: next candidate
+        self.assertEqual(app.input_var.get(), "salut @Annie ")
+        app._reset_complete(self._event())
+
+    def test_send_without_account_opens_settings(self):
+        app = self.app
+        app.open_tab("twitch", "eslcs")
+        self.pump()
+        app.input_var.set("hello")
+        app.send()
+        app.update()
+        self.assertEqual(app.panel_kind, "settings")
+        self.assertEqual(app.input_var.get(), "hello")  # le texte n'est pas perdu / the text is not lost
+
+    def test_user_and_message_menus(self):
+        from chat.common import ChatMessage
+        app = self.app
+        app.conns["twitch"] = Writer(app.events.put)
+        tab = app.open_tab("twitch", "eslcs")
+        self.pump()
+        msg = ChatMessage("twitch", "eslcs", text="gg", user="ann", display_name="Ann")
+        app.user_menu(tab.view, self._event(), "Ann", msg)
+        values = [i["value"] for i in app.popover.items]
+        self.assertEqual(values, ["mention", "copy", "open", "profile"])
+        app.popover.pick(values.index("mention"))
+        self.assertEqual(app.input_var.get(), "@Ann ")
+        app.user_menu(tab.view, self._event(), "Ann", msg)
+        app.popover.pick([i["value"] for i in app.popover.items].index("open"))
+        self.assertEqual(app.current.key, ("twitch", "ann"))
+        with mock.patch.object(app, "toast"):
+            app.message_menu(tab.view, self._event(), msg)
+            app.popover.pick(0)
+        self.assertEqual(app.clipboard_get(), "gg")
+
+    def test_settings_saved_and_applied(self):
+        from chat import config
+        app = self.app
+        app.open_tab("twitch", "eslcs")
+        self.pump()
+        app.open_settings()
+        app.update()
+        s = app.settings_state
+        s.update(font_size=16, timestamps=False, max_messages=1000, theme="dark")
+        s["_highlights_var"].set("gg, wp ,  , clutch")
+        with mock.patch.object(app, "toast"):
+            app.save_settings()
+        self.pump()
+        self.assertIsNone(app.panel_kind)
+        cfg = config.load()
+        self.assertEqual((cfg["font_size"], cfg["timestamps"], cfg["max_messages"]), (16, False, 1000))
+        self.assertEqual(cfg["highlights"], ["gg", "wp", "clutch"])
+        self.assertEqual(app.mode, "dark")
+        self.assertEqual(app.current.history.maxlen, 1000)
+
+
+@unittest.skipUnless(HAVE_DISPLAY, "pas d'écran ou de Tk disponible")
+class TestAccounts(TestGuiSmoke):
+    """Connexion Twitch par code d'appareil, avec l'application intégrée ou son propre Client ID ; déconnexion.
+
+    Twitch login with a device code, with the built-in application or one's own Client ID; logout."""
+
+    def test_open_chat_show_messages_settings_theme(self):  # déjà couvert par TestGuiSmoke / covered above
+        pass
+
+    def _login(self, client_id):
+        from chat import auth, config
+        app, started = self.app, []
+        device = {"device_code": "d", "user_code": "ABCD-EFGH", "verification_uri": "https://www.twitch.tv/activate",
+                  "interval": 1}
+        token = {"access_token": "tok", "refresh_token": "ref", "login": "chris", "user_id": "1"}
+        with mock.patch.object(auth, "TWITCH_CLIENT_ID", "pub123"), \
+                mock.patch.object(auth, "twitch_device_start", lambda cid: started.append(cid) or device), \
+                mock.patch.object(auth, "twitch_device_poll", lambda cid, dev, cancel: dict(token)), \
+                mock.patch.object(app, "open_url"), mock.patch.object(app, "toast"), \
+                mock.patch.object(app, "restart_connection") as restart:
+            app.login("twitch", client_id)
+            for _ in range(20):
+                self.pump()
+                if app.cfg["accounts"]["twitch"].get("access_token"):
+                    break
+            restart.assert_called_with("twitch")
+        return started, config.load()["accounts"]["twitch"]
+
+    def test_builtin_application(self):
+        started, acc = self._login("")
+        self.assertEqual(started, ["pub123"])            # application de Streamlink Chat / built-in application
+        self.assertEqual((acc["client_id"], acc["access_token"], acc["login"]), ("pub123", "tok", "chris"))
+        self.assertNotEqual(self.app.panel_kind, "login")
+        with mock.patch.object(self.app, "restart_connection"):
+            self.app.logout("twitch")
+        self.assertEqual(self.app.cfg["accounts"]["twitch"], {"client_id": "pub123"})
+
+    def test_own_client_id(self):
+        started, acc = self._login("mine456")
+        self.assertEqual(started, ["mine456"])
+        self.assertEqual(acc["client_id"], "mine456")
+
+    def test_no_client_id_without_builtin(self):
+        from chat import auth
+        app = self.app
+        with mock.patch.object(auth, "TWITCH_CLIENT_ID", ""), mock.patch.object(app, "toast") as toast, \
+                mock.patch.object(auth, "twitch_device_start") as start:
+            app.login("twitch", "")
+        start.assert_not_called()
+        toast.assert_called_once_with(app.t("chat_need_client_id"), "warn")
+        with mock.patch.object(auth, "TWITCH_CLIENT_ID", "pub123"):
+            app.open_settings(section="accounts")      # réglages avec le Client ID facultatif / optional Client ID
+            app.update()
+        self.assertEqual(app.panel_kind, "settings")
+
