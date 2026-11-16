@@ -11,6 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-16
+
+### Fixed
+- **Kick chats stayed in error** ("Repeated failures: the site may have changed"). Kick now refuses the old format of the two requests that open a chat (HTTP 400), so no guest token was obtained and the real-time server closed the connection (3501). The negotiation now sends `capabilities.accepted_providers` and the token request `client_id`, as kick.com does; the old formats are only tried after a 400. The guest token (about 45 minutes) is renewed before it expires, instead of a reconnection.
+
+### Removed
+- The old Pusher connection used as a last resort: Kick retired its key (`4001 App key … not in this cluster`). Pusher is still used if Kick's negotiation offers it.
+
 ## [0.3.0] - 2026-11-07
 
 ### Added
@@ -72,6 +80,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+## [0.3.1] - 2026-11-16
+
+### Corrigé
+- **Les chats Kick restaient en erreur** (« Échecs répétés : le site a peut-être changé »). Kick refuse maintenant l'ancien format des deux requêtes qui ouvrent un chat (HTTP 400) : aucun jeton invité n'était obtenu et le serveur temps réel fermait la connexion (3501). La négociation envoie désormais `capabilities.accepted_providers` et la demande de jeton `client_id`, comme kick.com ; les anciens formats ne sont essayés qu'après un refus 400. Le jeton invité (environ 45 minutes) est renouvelé avant d'expirer, au lieu d'une reconnexion.
+
+### Supprimé
+- L'ancienne connexion Pusher de dernier recours : Kick a retiré sa clé (`4001 App key … not in this cluster`). Pusher reste utilisé si la négociation de Kick le propose.
 
 ## [0.3.0] - 2026-11-07
 

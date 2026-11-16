@@ -28,6 +28,7 @@ import argparse
 import queue
 import sys
 import time
+import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -130,13 +131,14 @@ def diagnose_kick(channel):
     out.append(line)
     if not info:
         return " | ".join(out)
-    body = {"client": {"type": "web", "id": "live-check"}, "accepted_providers": ["pusher", "centrifugo"]}
+    client_id = str(uuid.uuid4())
     data, line = _step("négociation", lambda: http(
-        kick.NEGOTIATE_URL.format(channel_id=info["channel_id"]), data=body, headers=kick.HEADERS, method="POST"))
+        kick.NEGOTIATE_URL.format(channel_id=info["channel_id"]), data=kick.negotiate_bodies(client_id)[0],
+        headers=kick.HEADERS, method="POST"))
     found = kick.find_endpoints(data) if data is not None else []
     out.append(line + (f" ({', '.join(str(e.get('provider')) for e in found) or 'aucun point d accès'})"
                        if data is not None else ""))
-    data, line = _step("jeton", lambda: http(kick.AUTH_URL, data={"client": body["client"]},
+    data, line = _step("jeton", lambda: http(kick.AUTH_URL, data=kick.token_bodies(client_id)[0],
                                              headers=kick.HEADERS, method="POST"))
     out.append(line + (f" ({'jeton trouvé' if kick.find_token(data) else 'pas de jeton'}; "
                        f"clés : {', '.join(sorted(data)) if isinstance(data, dict) else type(data).__name__})"

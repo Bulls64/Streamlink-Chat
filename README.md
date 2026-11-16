@@ -39,7 +39,7 @@ Pure Python + Tkinter, **no third-party dependency**.
 | Kick | Without account (**experimental**) | After login | Kick's real-time chat; sending through the official API |
 | Steam TV | Without account | — | Steam's internal broadcast web API |
 
-**Kick is experimental.** On 13 October 2026, Kick moved its chat to a new, undocumented real-time system (Centrifugo, negotiated through `web.kick.com`). Streamlink Chat follows what is known of it, with the old Pusher connection as a fallback, and Kick's anti-bot protection can block some requests. If a Kick chat stays in error, please [open an issue](https://github.com/Bulls64/Streamlink-Chat/issues). Steam's broadcast API is not documented either.
+**Kick is experimental.** On 13 October 2026, Kick moved its chat to a new, undocumented real-time system (Centrifugo, negotiated through `web.kick.com`). Streamlink Chat follows what is known of it, and Kick's anti-bot protection can block some requests. If a Kick chat stays in error, please [open an issue](https://github.com/Bulls64/Streamlink-Chat/issues). Steam's broadcast API is not documented either.
 
 ### Getting started
 
@@ -164,7 +164,7 @@ Python et Tkinter uniquement, **sans aucune dépendance externe**.
 | Kick | Sans compte (**expérimental**) | Après connexion | Chat temps réel de Kick ; envoi par l'API officielle |
 | Steam TV | Sans compte | — | API web interne des diffusions Steam |
 
-**Kick est expérimental.** Le 13 octobre 2026, Kick a basculé son chat sur un nouveau système temps réel non documenté (Centrifugo, négocié via `web.kick.com`). Streamlink Chat suit ce qu'on en sait, avec l'ancienne connexion Pusher en secours, et la protection anti-robots de Kick peut bloquer certaines requêtes. Si un chat Kick reste en erreur, [ouvre un ticket](https://github.com/Bulls64/Streamlink-Chat/issues). L'API des diffusions Steam n'est pas documentée non plus.
+**Kick est expérimental.** Le 13 octobre 2026, Kick a basculé son chat sur un nouveau système temps réel non documenté (Centrifugo, négocié via `web.kick.com`). Streamlink Chat suit ce qu'on en sait, et la protection anti-robots de Kick peut bloquer certaines requêtes. Si un chat Kick reste en erreur, [ouvre un ticket](https://github.com/Bulls64/Streamlink-Chat/issues). L'API des diffusions Steam n'est pas documentée non plus.
 
 ### Démarrage
 
