@@ -386,22 +386,88 @@ class TestKick(unittest.TestCase):
         q = queue.Queue()
         ch = kick.KickChannel(q.put, "xqc")
         ch.info = {"channel_id": 1, "chatroom_id": 668, "user_id": 5, "name": "xQc"}
-        with mock.patch.object(kick, "http") as fake_http:
-            fake_http.side_effect = lambda url, **kw: (
-                {"data": {"provider": "centrifugo", "endpoint": srv.url}} if "chat/connection" in url
-                else {"data": {"token": "jwt-token"}})
+        posts = []
+
+        def fake(url, data=None, **kw):
+            posts.append((url, data))
+            if "chat/connection" in url:
+                return {"data": {"provider": "centrifugo", "endpoint": srv.url}}
+            return {"data": {"token": "jwt-token"}}
+        with mock.patch.object(kick, "http", side_effect=fake):
             threading.Thread(target=ch.run_once, daemon=True).start()
             msgs = collect(q, "message")
         self.assertEqual(msgs[0][1].display_name, "Foo")
         time.sleep(0.2)
         connect = next(f for f in frames if isinstance(f, dict) and "connect" in f)
         self.assertEqual(connect["connect"], {"name": "js", "token": "jwt-token"})
+        # Formats de kick.com depuis octobre 2026 / kick.com's formats since October 2026
+        self.assertEqual(posts[0][1], {"client": {"id": ch.client_id, "type": "web"}, "capabilities": {
+            "accepted_providers": [{"provider": "centrifugo"}, {"provider": "pusher"}]}})
+        self.assertEqual(posts[1], (kick.AUTH_URL, {"client_id": ch.client_id}))
         subs = [f["subscribe"]["channel"] for f in frames if isinstance(f, dict) and "subscribe" in f]
         self.assertEqual(subs, ["chatrooms.668.v2", "channel.1"])
         self.assertIn("pong", frames)
         self.assertTrue(any("Origin: https://kick.com" in h for h in srv.headers))
         ch.stop()
         srv.close()
+
+    def test_old_body_format_is_tried_after_a_400(self):
+        calls = []
+
+        def fake(url, data=None, **kw):
+            calls.append(data)
+            if "client_id" in data:
+                raise common.HttpError(400, "Bad Request")
+            return {"data": {"token": "jwt"}}
+        with mock.patch.object(kick, "http", side_effect=fake):
+            self.assertEqual(kick._post_first(kick.AUTH_URL, kick.token_bodies("u1")), {"data": {"token": "jwt"}})
+        self.assertEqual(calls, kick.token_bodies("u1"))
+        with mock.patch.object(kick, "http", side_effect=common.HttpError(403)) as h:
+            with self.assertRaises(common.HttpError):
+                kick._post_first(kick.AUTH_URL, kick.token_bodies("u1"))
+        self.assertEqual(h.call_count, 1)  # un 403 n'est pas un problème de format / a 403 is not a format issue
+
+    def test_negotiation_failure_falls_back_to_centrifugo_only(self):
+        ch = kick.KickChannel(lambda e: None, "xqc")
+        ch.info = {"channel_id": 1}
+        with mock.patch.object(kick, "http", side_effect=common.HttpError(400)):
+            self.assertEqual(ch._negotiate(), [{"provider": "centrifugo", "endpoint": kick.DEFAULT_CENTRIFUGO}])
+
+    def test_guest_token_is_refreshed_before_it_expires(self):
+        frames = []
+
+        def handler(c):
+            while True:
+                text = c.recv()
+                if text is None:
+                    return
+                obj = json.loads(text)
+                frames.append(obj)
+                if "connect" in obj:
+                    c.send(json.dumps({"id": obj["id"], "connect": {"client": "c1", "ping": 25, "expires": True,
+                                                                     "ttl": 1}}))
+                elif "subscribe" in obj:
+                    c.send(json.dumps({"id": obj["id"], "subscribe": {}}))
+                elif "refresh" in obj:
+                    c.send(json.dumps({"id": obj["id"], "refresh": {"expires": True, "ttl": 2700}}))
+        srv = FakeWSServer(handler)
+        q = queue.Queue()
+        ch = kick.KickChannel(q.put, "xqc")
+        ch.info = {"channel_id": 1, "chatroom_id": 668, "user_id": 5, "name": "xQc"}
+        tokens = iter(["t1", "t2", "t3"])
+        with mock.patch.object(kick, "http", side_effect=lambda url, **kw: (
+                {"data": {"provider": "centrifugo", "endpoint": srv.url}} if "chat/connection" in url
+                else {"data": {"token": next(tokens)}})):
+            threading.Thread(target=ch.run_once, daemon=True).start()
+            deadline = time.time() + 5
+            while time.time() < deadline and not any("refresh" in f for f in frames):
+                time.sleep(0.1)
+            time.sleep(0.3)
+        ch.stop()
+        srv.close()
+        refreshes = [f["refresh"]["token"] for f in frames if "refresh" in f]
+        self.assertEqual(refreshes, ["t2"])  # une fois, puis la réponse repousse au prochain délai
+                                              # once, then the reply pushes back to the next delay
 
     def test_resolve_channel(self):
         payload = {"id": 1, "user_id": 5, "slug": "xqc", "user": {"username": "xQc"}, "chatroom": {"id": 668},

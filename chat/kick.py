@@ -36,7 +36,6 @@ NEGOTIATE_URL = "https://web.kick.com/api/v1/realtime/channels/{channel_id}/chat
 NEGOTIATE_FALLBACK_URL = "https://web.kick.com/api/v1/realtime/connection"
 AUTH_URL = "https://web.kick.com/api/v1/realtime/auth/connection"
 DEFAULT_CENTRIFUGO = "wss://realtime.us-east-1.platform.kick.com/connection/websocket"
-LEGACY_PUSHER = {"provider": "pusher", "app_key": "32cbd69e4b950bf97679", "cluster": "us2"}
 PUSHER_URL = "wss://ws-{cluster}.pusher.com/app/{key}?protocol=7&client=js&version=8.4.0&flash=false"
 SEND_URL = "https://api.kick.com/public/v1/chat"
 EMOTE_URL = "https://files.kick.com/emotes/{id}/fullsize"
@@ -78,6 +77,35 @@ def resolve_channel(slug):
     if isinstance(last, HttpError) and last.status in (403, 429, 503):
         raise KickError("blocked")
     raise KickError(f"lookup: {last}")
+
+
+def negotiate_bodies(client_id):
+    """Corps de la négociation, du format actuel de kick.com (depuis octobre 2026) au plus ancien.
+
+    Negotiation bodies, from kick.com's current format (since October 2026) to the oldest."""
+    client = {"id": client_id, "type": "web"}
+    return [{"client": client, "capabilities": {"accepted_providers": [{"provider": "centrifugo"},
+                                                                       {"provider": "pusher"}]}},
+            {"client": client, "accepted_providers": ["pusher", "centrifugo"]}]
+
+
+def token_bodies(client_id):
+    """Corps de la demande de jeton invité, du format actuel au plus ancien.
+
+    Guest token request bodies, from the current format to the oldest."""
+    return [{"client_id": client_id}, {"client": {"id": client_id, "type": "web"}}]
+
+
+def _post_first(url, bodies):
+    """POST du premier corps accepté : un refus 400 (format refusé) fait essayer le suivant.
+
+    POST of the first accepted body: a 400 refusal (format refused) tries the next one."""
+    for i, body in enumerate(bodies):
+        try:
+            return http(url, data=body, headers=HEADERS, method="POST")
+        except HttpError as e:
+            if e.status != 400 or i == len(bodies) - 1:
+                raise
 
 
 def find_endpoints(data):
@@ -203,20 +231,19 @@ class KickChannel(Connection):
     # --- négociation
     # --- negotiation
     def _negotiate(self):
-        body = {"client": {"type": "web", "id": self.client_id}, "accepted_providers": ["pusher", "centrifugo"]}
+        fallback = [{"provider": "centrifugo", "endpoint": DEFAULT_CENTRIFUGO}]
         for url in (NEGOTIATE_URL.format(channel_id=self.info["channel_id"]), NEGOTIATE_FALLBACK_URL):
             try:
-                found = find_endpoints(http(url, data=body, headers=HEADERS, method="POST"))
+                found = find_endpoints(_post_first(url, negotiate_bodies(self.client_id)))
                 if found:
-                    return found + [{"provider": "centrifugo", "endpoint": DEFAULT_CENTRIFUGO}, LEGACY_PUSHER]
+                    return found + fallback
             except (HttpError, OSError, ValueError) as e:
                 log.info("Kick : négociation %s : %s", url, e)
-        return [{"provider": "centrifugo", "endpoint": DEFAULT_CENTRIFUGO}, LEGACY_PUSHER]
+        return fallback
 
     def _token(self):
-        body = {"client": {"type": "web", "id": self.client_id}}
         try:
-            return find_token(http(AUTH_URL, data=body, headers=HEADERS, method="POST"))
+            return find_token(_post_first(AUTH_URL, token_bodies(self.client_id)))
         except (HttpError, OSError, ValueError) as e:
             log.info("Kick : jeton temps réel : %s", e)
             return None
@@ -238,13 +265,26 @@ class KickChannel(Connection):
             ws.send(json.dumps({"id": 1, "connect": connect}))
             ws.settimeout(15)
             reply = self._centrifugo_reply(ws, 1)
-            ping = int((reply.get("connect") or {}).get("ping") or ep.get("ping") or 25)
-            for i, ch in enumerate(self._channels(), start=2):
+            info = reply.get("connect") or {}
+            ping = int(info.get("ping") or ep.get("ping") or 25)
+            channels = self._channels()
+            for i, ch in enumerate(channels, start=2):
                 ws.send(json.dumps({"id": i, "subscribe": {"channel": ch, "flag": 1}}))
+            next_id = 2 + len(channels)
+            # Le jeton invité expire (environ 45 min) : on le renouvelle aux trois quarts de sa durée
+            # The guest token expires (about 45 min): it is renewed at three quarters of its lifetime
+            refresh_at = time.time() + 0.75 * int(info.get("ttl") or 0) if info.get("expires") and token else None
             ws.settimeout(1.0)
             last = time.time()
             joined = False
             while not self.stop_event.is_set():
+                if refresh_at and time.time() >= refresh_at:
+                    token = self._token()
+                    if not token:
+                        raise KickError("token_refresh")
+                    ws.send(json.dumps({"id": next_id, "refresh": {"token": token}}))
+                    next_id += 1
+                    refresh_at = None  # la réponse donne le prochain délai / the reply gives the next delay
                 try:
                     data = ws.recv()
                 except socket.timeout:
@@ -262,6 +302,9 @@ class KickChannel(Connection):
                     obj = json.loads(line)
                     if "error" in obj:
                         raise KickError(f"centrifugo {obj['error']}")
+                    if isinstance(obj.get("refresh"), dict):
+                        ttl = int(obj["refresh"].get("ttl") or 0)
+                        refresh_at = time.time() + 0.75 * ttl if obj["refresh"].get("expires") and ttl else None
                     if obj.get("id") == 2 and "subscribe" in obj and not joined:
                         joined = True
                         self.status(self.slug, "connected", "ro")
