@@ -169,16 +169,6 @@ jobs:
         with:
           name: StreamlinkChat-${{ env.VERSION }}-x86_64.AppImage
           path: linux
-      - name: Download the .deb
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
-        with:
-          name: ${{ env.DEB }}
-          path: linux
-      - name: Download the .rpm
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
-        with:
-          name: ${{ env.RPM }}
-          path: linux
       - name: Install rpmbuild and Xvfb
         run: bash packaging/ci_apt.sh rpm xvfb
       - name: Build
@@ -271,6 +261,16 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
         with:
           name: ${{ env.APPIMAGE }}
+          path: linux
+      - name: Download the .deb
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with:
+          name: ${{ env.DEB }}
+          path: linux
+      - name: Download the .rpm
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with:
+          name: ${{ env.RPM }}
           path: linux
       - name: Gather the files
         shell: bash
