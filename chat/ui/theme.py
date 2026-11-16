@@ -5,6 +5,8 @@ import logging
 import os
 import tkinter.font as tkfont
 
+from ..common import hex_to_rgb, luminance
+
 log = logging.getLogger("streamlink_launcher")
 
 
@@ -12,11 +14,6 @@ log = logging.getLogger("streamlink_launcher")
 # Couleurs
 # Colors
 # ---------------------
-def hex_to_rgb(h):
-    h = h.lstrip("#")
-    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-
-
 def rgb_to_hex(rgb):
     return "#%02x%02x%02x" % tuple(max(0, min(255, int(round(v)))) for v in rgb)
 
@@ -27,14 +24,6 @@ def mix(a, b, t):
     Blends a towards b (t = 0 -> a, t = 1 -> b)."""
     ra, rb = hex_to_rgb(a), hex_to_rgb(b)
     return rgb_to_hex(tuple(x + (y - x) * t for x, y in zip(ra, rb)))
-
-
-def luminance(h):
-    def lin(v):
-        v /= 255
-        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
-    r, g, b = hex_to_rgb(h)
-    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
 
 
 class Palette(dict):

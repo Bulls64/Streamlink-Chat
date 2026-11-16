@@ -77,7 +77,6 @@ class ChatApp(TabsMixin, ConnectionsMixin, MediaMixin, ComposeMixin, SettingsMix
         self.gifs = {}              # url -> (octets du GIF, délais) des emotes animées, décodées seulement si visibles
                                     # url -> (GIF bytes, delays) of animated emotes, decoded only when visible
         self._anims_dirty = False
-        self.emote_names = {}
         self.anims = {}             # url -> [image affichée, [(image, délai)], index, prochain changement]
                                     # url -> [displayed image, [(image, delay)], index, next change]
                                     # seulement pour le chat affiché / only for the displayed chat

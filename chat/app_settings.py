@@ -197,7 +197,6 @@ class SettingsMixin:
                 self.after(50, lambda sec=sec: self._scroll_to(sec))
 
             sec = self._section(b, t("chat_section_accounts"))
-            self.accounts_box = sec
             self._account_block(sec, "twitch", accounts.get("twitch") or {})
             self._account_block(sec, "kick", accounts.get("kick") or {})
             if section == "accounts":

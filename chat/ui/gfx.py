@@ -10,15 +10,6 @@ _SAMPLES = (0.125, 0.375, 0.625, 0.875)  # suréchantillonnage 4x4
                                          # 4x4 supersampling
 
 
-def _tri_crosses(tri, i, j):
-    """Un sommet du triangle tombe-t-il dans le pixel (i, j) ? (le triangle pourrait alors l'entamer
-    sans qu'aucun coin du pixel soit dedans).
-
-    Does a vertex of the triangle fall inside pixel (i, j)? (the triangle could then cut into it
-    without any corner of the pixel being inside)."""
-    return any(i <= x <= i + 1 and j <= y <= j + 1 for x, y in tri)
-
-
 class Painter:
     """Les coins sont de petites images (r x r) où la couleur du fond est déjà mélangée :
     pas de transparence, donc rapide et identique sur toutes les versions de Tk.
@@ -107,71 +98,6 @@ class Painter:
         cv.create_arc(x1 - 2 * r, y0, x1, y0 + 2 * r, start=0, **akw)
         cv.create_arc(x0, y1 - 2 * r, x0 + 2 * r, y1, start=180, **akw)
         cv.create_arc(x1 - 2 * r, y1 - 2 * r, x1, y1, start=270, **akw)
-
-    def app_icon(self, size, color, fg="#FFFFFF"):
-        """Icône de la fenêtre : carré arrondi + triangle « lecture », lissés.
-
-        Window icon: rounded square + "play" triangle, smoothed."""
-        C, W = hex_to_rgb(color), hex_to_rgb(fg)
-        r = size * 0.24
-        tri = [(size * 0.38, size * 0.28), (size * 0.38, size * 0.72), (size * 0.76, size * 0.50)]
-
-        def in_rr(x, y):
-            dx = max(r - x, 0, x - (size - r))
-            dy = max(r - y, 0, y - (size - r))
-            return dx * dx + dy * dy <= r * r
-
-        def in_tri(x, y):
-            (ax, ay), (bx, by), (cx, cy) = tri
-            d1 = (x - bx) * (ay - by) - (ax - bx) * (y - by)
-            d2 = (x - cx) * (by - cy) - (bx - cx) * (y - cy)
-            d3 = (x - ax) * (cy - ay) - (cx - ax) * (y - ay)
-            return not ((d1 < 0 or d2 < 0 or d3 < 0) and (d1 > 0 or d2 > 0 or d3 > 0))
-
-        # Pixel entièrement dans une forme convexe (ses 4 coins le sont) : tous ses sous-échantillons aussi,
-        # inutile de les calculer un par un. Seuls les pixels des bords sont suréchantillonnés : même résultat.
-        # Pixel entirely inside a convex shape (its 4 corners are): all its subsamples are too,
-        # no need to compute them one by one. Only the edge pixels are supersampled: same result.
-        def solid(i, j, inside):
-            return inside(i, j) and inside(i + 1, j) and inside(i, j + 1) and inside(i + 1, j + 1)
-
-        color_c, color_w = "#%02x%02x%02x" % C, "#%02x%02x%02x" % W
-        rows, transparent = [], []
-        for j in range(size):
-            row = []
-            for i in range(size):
-                if solid(i, j, in_rr):
-                    if solid(i, j, in_tri):
-                        row.append(color_w)
-                        continue
-                    if not any(in_tri(i + a, j + b) for a in (0, 1) for b in (0, 1)) and not _tri_crosses(
-                            tri, i, j):
-                        row.append(color_c)
-                        continue
-                acc = [0.0, 0.0, 0.0]
-                cover = 0
-                for sy in _SAMPLES:
-                    for sx in _SAMPLES:
-                        x, y = i + sx, j + sy
-                        if in_rr(x, y):
-                            cover += 1
-                            col = W if in_tri(x, y) else C
-                            for k in range(3):
-                                acc[k] += col[k]
-                if cover:
-                    row.append("#%02x%02x%02x" % tuple(int(a / cover) for a in acc))
-                    if cover < 8:
-                        transparent.append((i, j))
-                else:
-                    row.append(color_c)
-                    transparent.append((i, j))
-            rows.append("{" + " ".join(row) + "}")
-        img = tk.PhotoImage(master=self.root, width=size, height=size)
-        img.put(" ".join(rows))  # une seule écriture au lieu d'une par pixel
-                                 # a single write instead of one per pixel
-        for i, j in transparent:
-            img.transparency_set(i, j, True)
-        return img
 
 
 # ---------------------

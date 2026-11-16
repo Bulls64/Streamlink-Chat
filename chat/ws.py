@@ -60,7 +60,6 @@ class WebSocket:
         self._buf = b""
         self._parts, self._op = [], 0x1
         self._send_lock = threading.Lock()
-        self.closed = False
 
     # --- connexion
     # --- connection
@@ -229,7 +228,6 @@ class WebSocket:
             self.sock.settimeout(seconds)
 
     def close(self):
-        self.closed = True
         sock, self.sock = self.sock, None
         if sock is not None:
             try:
