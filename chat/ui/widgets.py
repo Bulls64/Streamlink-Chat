@@ -197,11 +197,6 @@ class Button(Widget):
         self.accent = accent
         self.redraw()
 
-    def set_text(self, text):
-        self.text = text
-        self.configure(width=self._natural_width(int(self.cget("height"))))
-        self.redraw()
-
     def draw(self, w, h):
         c, bg = self.c, self.cget("bg")
         fill = outline = None
@@ -491,10 +486,6 @@ class Select(Widget):
     def label(self):
         return next((lbl for v, lbl in self.options if v == self.value), self.value or "—")
 
-    def set_options(self, options, value):
-        self.options, self.value = options, value
-        self.redraw()
-
     def open(self):
         if self.app.popover.is_open_for(self):
             self.app.popover.close()
@@ -625,16 +616,6 @@ class Popover:
 
     def _scroll(self, d):
         self.offset = max(0, min(self.offset + d, len(self.items) - self.ROWS))
-        self.draw()
-
-    def move(self, d):
-        if not self.items:
-            return
-        self.hi = 0 if self.hi is None else max(0, min(len(self.items) - 1, self.hi + d))
-        if self.hi < self.offset:
-            self.offset = self.hi
-        elif self.hi >= self.offset + self.ROWS:
-            self.offset = self.hi - self.ROWS + 1
         self.draw()
 
     def pick(self, index=None):

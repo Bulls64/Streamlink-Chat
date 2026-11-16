@@ -61,7 +61,7 @@ class ChatMessage:
 # Découpage du texte
 # Text splitting
 # ---------------------
-def split_words(text, emotes=None, own_name=""):
+def split_words(text, emotes=None):
     """Texte -> fragments : emotes (dictionnaire nom -> url), liens, mentions @pseudo.
 
     Text -> fragments: emotes (name -> url dictionary), links, @username mentions."""
@@ -133,21 +133,24 @@ def default_color(name):
     return DEFAULT_COLORS[h % len(DEFAULT_COLORS)]
 
 
-def _lum(rgb):
-    def lin(v):
-        v /= 255
-        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
-    r, g, b = rgb
-    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-
-
-def _rgb(h):
+def hex_to_rgb(h):
     h = h.lstrip("#")
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
+def luminance(h):
+    """Luminance relative d'une couleur #rrggbb (WCAG), de 0 (noir) à 1 (blanc).
+
+    Relative luminance of a #rrggbb color (WCAG), from 0 (black) to 1 (white)."""
+    def lin(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = hex_to_rgb(h)
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+
+
 def contrast(a, b):
-    la, lb = _lum(_rgb(a)), _lum(_rgb(b))
+    la, lb = luminance(a), luminance(b)
     hi, lo = max(la, lb), min(la, lb)
     return (hi + 0.05) / (lo + 0.05)
 
@@ -158,9 +161,9 @@ def readable_color(color, bg, minimum=4.0):
     Lightens or darkens a username's color until it is readable on the background (like Chatterino)."""
     if not re.fullmatch(r"#[0-9a-fA-F]{6}", color or ""):
         return None
-    target = "#FFFFFF" if _lum(_rgb(bg)) < 0.4 else "#000000"
+    target = "#FFFFFF" if luminance(bg) < 0.4 else "#000000"
     c = color.upper()
-    rgb0, rgb1 = _rgb(c), _rgb(target)
+    rgb0, rgb1 = hex_to_rgb(c), hex_to_rgb(target)
     for step in range(11):
         t = step / 10
         mixed = "#%02X%02X%02X" % tuple(round(x + (y - x) * t) for x, y in zip(rgb0, rgb1))

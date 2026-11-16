@@ -144,7 +144,6 @@ class ChatView:
         self.lines = deque()      # messages affichés, dans l'ordre des lignes
                                   # displayed messages, in line order
         self.by_id = {}
-        self.by_user = {}
         self.at_bottom = True
         self._setup_tags()
 

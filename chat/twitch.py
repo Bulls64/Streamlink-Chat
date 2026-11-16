@@ -12,7 +12,6 @@ from .ws import ConnectionClosed, WebSocket
 
 IRC_URL = "wss://irc-ws.chat.twitch.tv:443"
 EMOTE_URL = "https://static-cdn.jtvnw.net/emoticons/v2/{id}/default/{theme}/1.0"
-LOGIN_RE = re.compile(r"^[a-z0-9_]{1,25}$")
 
 BADGES = {  # identifiant Twitch -> (identifiant interne, libellé court)
             # Twitch id -> (internal id, short label)

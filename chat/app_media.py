@@ -208,6 +208,5 @@ class MediaMixin:
             base = self.global_emotes if tab.platform == "twitch" else {}
             maps[tab.key] = {**base, **self.channel_emotes.get(tab.key, {})}
         self.emote_maps = maps
-        self.emote_names = {url: name for m in maps.values() for name, url in m.items()}
 
     # =====================================================

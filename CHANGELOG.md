@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- **Code clean-up**: unused code removed (`app_icon` and its helper, `set_text`, `set_options`, `Popover.move`, two unused regular expressions, attributes written but never read, the unused `own_name` parameter); the luminance and hex-to-RGB color helpers exist once, in `chat/common.py`, instead of twice. No change in behavior.
+
 ## [0.3.2] - 2026-11-16
 
 ### Added
@@ -91,6 +94,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+### Modifié
+- **Nettoyage du code** : code inutilisé supprimé (`app_icon` et sa fonction d'aide, `set_text`, `set_options`, `Popover.move`, deux expressions régulières inutilisées, des attributs écrits mais jamais lus, le paramètre inutilisé `own_name`) ; les fonctions de couleur (luminance, hexadécimal vers RVB) n'existent plus qu'une fois, dans `chat/common.py`, au lieu de deux. Aucun changement de comportement.
 
 ## [0.3.2] - 2026-11-16
 

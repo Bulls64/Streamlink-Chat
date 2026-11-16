@@ -41,7 +41,6 @@ SEND_URL = "https://api.kick.com/public/v1/chat"
 EMOTE_URL = "https://files.kick.com/emotes/{id}/fullsize"
 ORIGIN = "https://kick.com"
 HEADERS = {"Origin": ORIGIN, "Referer": "https://kick.com/"}
-SLUG_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 EMOTE_RE = re.compile(r"\[emote:(\d+):([^\]]*)\]")
 
 BADGES = {"broadcaster": ("broadcaster", "Streamer"), "moderator": ("moderator", "Mod"), "vip": ("vip", "VIP"),
