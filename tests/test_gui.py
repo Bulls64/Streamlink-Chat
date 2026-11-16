@@ -405,7 +405,11 @@ class TestAccounts(TestGuiSmoke):
                 mock.patch.object(auth, "twitch_device_start", lambda cid: started.append(cid) or device), \
                 mock.patch.object(auth, "twitch_device_poll", lambda cid, dev, cancel: dict(token)), \
                 mock.patch.object(app, "open_url"), mock.patch.object(app, "toast"), \
+                mock.patch.object(auth, "twitch_ensure", lambda acc, **kw: acc), \
                 mock.patch.object(app, "restart_connection") as restart:
+            # twitch_ensure imité : la vérification des jetons du démarrage (0,3 s après) ne doit pas interroger le
+            # vrai Twitch, qui refuserait le faux jeton et l'effacerait / twitch_ensure imitated: the start-up token
+            # check (0.3 s later) must not ask the real Twitch, which would refuse the fake token and erase it
             app.login("twitch", client_id)
             # Jusqu'à 10 s : la connexion passe par un thread, lent sur les runners Windows
             # Up to 10 s: the login goes through a thread, slow on Windows runners
