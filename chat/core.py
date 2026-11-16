@@ -40,7 +40,12 @@ def _user_data_dir():
 # Portable version by default: the data stays next to the application. Read-only folder (or AppImage,
 # extracted to a temporary folder): %APPDATA%\Streamlink Chat or ~/.config/streamlink-chat.
 APPIMAGE = bool(os.environ.get("APPIMAGE")) and not FROZEN and os.name != "nt"
-PORTABLE = not APPIMAGE and _is_writable(BASE_DIR)
+# Paquet .deb ou .rpm : l'application est dans /opt (marquée par .system-install) ; comme l'AppImage, données dans
+# ~/.config, même lancée par root qui pourrait écrire dans /opt.
+# .deb or .rpm package: the application is in /opt (marked by .system-install); like the AppImage, data in
+# ~/.config, even when started by root, who could write to /opt.
+SYSTEM_INSTALL = (BASE_DIR / ".system-install").is_file() and not FROZEN
+PORTABLE = not (APPIMAGE or SYSTEM_INSTALL) and _is_writable(BASE_DIR)
 DATA_ROOT = BASE_DIR if PORTABLE else _user_data_dir()
 LANG_DIR = BASE_DIR / "lang" if (BASE_DIR / "lang").is_dir() else RES_DIR / "lang"
 LOG_FILE = DATA_ROOT / "chat.log"

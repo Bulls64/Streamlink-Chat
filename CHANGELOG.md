@@ -11,6 +11,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-16
+
+### Added
+- **Linux packages**: `streamlink-chat_<version>_amd64.deb` (Debian, Ubuntu, Linux Mint) and `streamlink-chat-<version>-1.x86_64.rpm` (Fedora, openSUSE), made from the AppImage (same embedded Python and Tcl/Tk), installed in `/opt/streamlink-chat` with a menu entry, the icon and the `streamlink-chat` command, which Streamlink Launcher 1.7.1 finds for *Open the chat*. The CI installs and starts the `.deb` on Ubuntu 22.04 and the `.rpm` on Fedora, then attaches both to the release, with their SHA-256.
+
+### Fixed
+- Installed in a system folder and started by root (who can write there), the chat kept its data next to itself: a package install always uses `~/.config/streamlink-chat`, like the AppImage.
+
+### Changed
+- CI: apt packages are installed by `packaging/ci_apt.sh` (only the missing ones, with retries and a fallback mirror), as in Streamlink Launcher. A Twitch login test waits for the saved account (up to 10 s) instead of a fixed number of rounds, which was not always enough on Windows runners.
+
 ## [0.3.1] - 2026-11-16
 
 ### Fixed
@@ -80,6 +91,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+## [0.3.2] - 2026-11-16
+
+### Ajouté
+- **Paquets Linux** : `streamlink-chat_<version>_amd64.deb` (Debian, Ubuntu, Linux Mint) et `streamlink-chat-<version>-1.x86_64.rpm` (Fedora, openSUSE), faits à partir de l'AppImage (même Python et Tcl/Tk embarqués), installés dans `/opt/streamlink-chat` avec une entrée de menu, l'icône et la commande `streamlink-chat`, que Streamlink Launcher 1.7.1 trouve pour *Ouvrir le chat*. La CI installe et lance le `.deb` sous Ubuntu 22.04 et le `.rpm` sous Fedora, puis les joint à la release avec leur SHA-256.
+
+### Corrigé
+- Installé dans un dossier système et lancé par root (qui peut y écrire), le chat gardait ses données à côté de lui : une installation par paquet utilise toujours `~/.config/streamlink-chat`, comme l'AppImage.
+
+### Modifié
+- CI : les paquets apt sont installés par `packaging/ci_apt.sh` (seulement ceux qui manquent, avec reprises et miroir de secours), comme dans Streamlink Launcher. Un test de connexion Twitch attend le compte enregistré (jusqu'à 10 s) au lieu d'un nombre fixe de tours, pas toujours suffisant sur les runners Windows.
 
 ## [0.3.1] - 2026-11-16
 

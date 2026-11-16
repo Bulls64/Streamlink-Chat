@@ -56,6 +56,17 @@ chmod +x StreamlinkChat-*-x86_64.AppImage
 
 It includes its own Python and Tcl/Tk. It needs glibc 2.35 or newer (Ubuntu 22.04, Debian 12, Fedora 36, Linux Mint 21 or newer). Without FUSE (`libfuse2`), run it with `--appimage-extract-and-run`.
 
+#### Linux: .deb or .rpm package
+
+Same content as the AppImage, installed in `/opt/streamlink-chat`, with a menu entry and the `streamlink-chat` command (Streamlink Launcher finds it for *Open the chat*). Download the file from the [latest release](https://github.com/Bulls64/Streamlink-Chat/releases/latest), then:
+
+```sh
+sudo apt install ./streamlink-chat_<version>_amd64.deb         # Debian, Ubuntu, Linux Mint
+sudo dnf install ./streamlink-chat-<version>-1.x86_64.rpm       # Fedora (openSUSE: sudo zypper install ./…rpm)
+```
+
+To update, install the new package the same way; to remove it, `sudo apt remove streamlink-chat` or `sudo dnf remove streamlink-chat`.
+
 #### From source
 
 Python 3.10 or newer, with Tcl/Tk:
@@ -83,7 +94,7 @@ Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in pla
 
 - The file must be the release asset of this repository, with the size and the SHA-256 published by GitHub, and look like a Windows executable. Redirects are followed only to GitHub. If the current executable is signed, the new one must be signed by the same publisher.
 - The previous executable is renamed `.old` and removed at the next start; on any failure, it is put back. A file named after its version (`StreamlinkChat-0.1.0.exe`) takes the new number.
-- Installing by itself only works for the Windows `.exe` in a folder you can write to. From the sources or with the AppImage, *Update* opens the release page instead.
+- Installing by itself only works for the Windows `.exe` in a folder you can write to. From the sources, the AppImage or a `.deb`/`.rpm` package, *Update* opens the release page instead.
 
 ### Keyboard
 
@@ -97,7 +108,7 @@ Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in pla
 
 ### Configuration and data
 
-Files are stored next to `slink_chat.py` or the `.exe`; if that folder is read-only, in `%APPDATA%\Streamlink Chat` (Windows) or `~/.config/streamlink-chat` (Linux, always for the AppImage).
+Files are stored next to `slink_chat.py` or the `.exe`; if that folder is read-only, in `%APPDATA%\Streamlink Chat` (Windows) or `~/.config/streamlink-chat` (Linux, always for the AppImage and the `.deb`/`.rpm` packages).
 
 | File | Content |
 |---|---|
@@ -113,6 +124,7 @@ Streamlink Chat connects only to: the chats themselves (Twitch IRC, Kick at `kic
 
 - **Windows executable**: `packaging\build_exe.bat` (PyInstaller, version pinned in `packaging/requirements-build.txt`) produces `dist\Streamlink Chat.exe`.
 - **AppImage**: `bash packaging/appimage/build_appimage.sh` (needs `build-essential libx11-dev libxft-dev libxss-dev libfontconfig-dev patchelf`); it bundles a standalone Python and recompiles Tcl/Tk with Xft for smooth text.
+- **.deb and .rpm**: `bash packaging/linux/build_packages.sh dist/StreamlinkChat-<version>-x86_64.AppImage` (needs `rpm` for rpmbuild); made from the AppImage. The CI installs and starts the `.deb` on Ubuntu 22.04 and the `.rpm` on Fedora.
 - On GitHub Actions, every pull request builds both, and pushing a `v*` tag publishes them with `SHA256SUMS.txt`.
 
 ### Tests
@@ -181,6 +193,17 @@ chmod +x StreamlinkChat-*-x86_64.AppImage
 
 Elle embarque son propre Python et Tcl/Tk. Il faut la glibc 2.35 ou plus récente (Ubuntu 22.04, Debian 12, Fedora 36, Linux Mint 21 ou plus récents). Sans FUSE (`libfuse2`), lance-la avec `--appimage-extract-and-run`.
 
+#### Linux : paquet .deb ou .rpm
+
+Même contenu que l'AppImage, installé dans `/opt/streamlink-chat`, avec une entrée dans le menu et la commande `streamlink-chat` (Streamlink Launcher la trouve pour *Ouvrir le chat*). Télécharge le fichier depuis la [dernière release](https://github.com/Bulls64/Streamlink-Chat/releases/latest), puis :
+
+```sh
+sudo apt install ./streamlink-chat_<version>_amd64.deb         # Debian, Ubuntu, Linux Mint
+sudo dnf install ./streamlink-chat-<version>-1.x86_64.rpm       # Fedora (openSUSE : sudo zypper install ./…rpm)
+```
+
+Pour mettre à jour, installe le nouveau paquet de la même façon ; pour le désinstaller, `sudo apt remove streamlink-chat` ou `sudo dnf remove streamlink-chat`.
+
 #### Depuis les sources
 
 Python 3.10 ou plus récent, avec Tcl/Tk :
@@ -208,7 +231,7 @@ Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows 
 
 - Le fichier doit être celui de la release de ce dépôt, avec la taille et l'empreinte SHA-256 publiées par GitHub, et ressembler à un exécutable Windows. Les redirections ne sont suivies que vers GitHub. Si l'exécutable actuel est signé, le nouveau doit l'être par le même éditeur.
 - L'ancien exécutable est renommé `.old` et supprimé au démarrage suivant ; en cas d'échec, il est remis en place. Un fichier nommé d'après sa version (`StreamlinkChat-0.1.0.exe`) prend le nouveau numéro.
-- L'installation automatique ne concerne que l'`.exe` Windows placé dans un dossier modifiable. Depuis les sources ou avec l'AppImage, *Mettre à jour* ouvre la page de la release.
+- L'installation automatique ne concerne que l'`.exe` Windows placé dans un dossier modifiable. Depuis les sources, l'AppImage ou un paquet `.deb`/`.rpm`, *Mettre à jour* ouvre la page de la release.
 
 ### Clavier
 
@@ -222,7 +245,7 @@ Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows 
 
 ### Configuration et données
 
-Les fichiers sont rangés à côté de `slink_chat.py` ou du `.exe` ; si ce dossier est protégé en écriture, dans `%APPDATA%\Streamlink Chat` (Windows) ou `~/.config/streamlink-chat` (Linux, toujours pour l'AppImage).
+Les fichiers sont rangés à côté de `slink_chat.py` ou du `.exe` ; si ce dossier est protégé en écriture, dans `%APPDATA%\Streamlink Chat` (Windows) ou `~/.config/streamlink-chat` (Linux, toujours pour l'AppImage et les paquets `.deb`/`.rpm`).
 
 | Fichier | Contenu |
 |---|---|
@@ -238,6 +261,7 @@ Streamlink Chat ne se connecte qu'aux chats eux-mêmes (IRC Twitch, Kick via `ki
 
 - **Exécutable Windows** : `packaging\build_exe.bat` (PyInstaller, version figée dans `packaging/requirements-build.txt`) produit `dist\Streamlink Chat.exe`.
 - **AppImage** : `bash packaging/appimage/build_appimage.sh` (paquets `build-essential libx11-dev libxft-dev libxss-dev libfontconfig-dev patchelf`) ; elle embarque un Python autonome et recompile Tcl/Tk avec Xft pour un texte lissé.
+- **.deb et .rpm** : `bash packaging/linux/build_packages.sh dist/StreamlinkChat-<version>-x86_64.AppImage` (paquet `rpm` pour rpmbuild) ; faits à partir de l'AppImage. La CI installe et lance le `.deb` sous Ubuntu 22.04 et le `.rpm` sous Fedora.
 - Sur GitHub Actions, chaque pull request construit les deux, et pousser un tag `v*` les publie avec `SHA256SUMS.txt`.
 
 ### Tests

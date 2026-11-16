@@ -553,6 +553,39 @@ class TestSteam(unittest.TestCase):
 # Commun, réglages, emotes, comptes
 # Common, settings, emotes, accounts
 # ---------------------
+class TestSystemInstall(unittest.TestCase):
+    """Paquet .deb ou .rpm : le dossier de l'appli (/opt) porte .system-install ; les données vont dans ~/.config,
+    même si le dossier est modifiable (lancé par root).
+
+    .deb or .rpm package: the app folder (/opt) carries .system-install; the data goes to ~/.config,
+    even if the folder is writable (started by root)."""
+
+    def where(self, marker):
+        import shutil
+        import subprocess
+        root = Path(tempfile.mkdtemp())
+        app = root / "opt" / "app"
+        shutil.copytree(ROOT / "chat", app / "chat", ignore=shutil.ignore_patterns("__pycache__"))
+        if marker:
+            (app / ".system-install").write_text("streamlink-chat 0.3.2", encoding="utf-8")
+        env = {k: v for k, v in os.environ.items() if k != "APPIMAGE"}
+        env["XDG_CONFIG_HOME"] = env["APPDATA"] = str(root / "config")
+        code = "from chat import core; print(core.SYSTEM_INSTALL, core.PORTABLE, core.DATA_ROOT, sep='|')"
+        out = subprocess.run([sys.executable, "-c", code], cwd=app, env=env, capture_output=True, text=True,
+                             check=True).stdout.strip().split("|")
+        return out, app, root
+
+    def test_package_keeps_data_in_the_user_folder(self):
+        (system, portable, data), app, root = self.where(marker=True)
+        self.assertEqual((system, portable), ("True", "False"))
+        self.assertTrue(Path(data).is_relative_to(root / "config"))
+
+    def test_folder_without_marker_stays_portable(self):
+        (system, portable, data), app, root = self.where(marker=False)
+        self.assertEqual((system, portable), ("False", "True"))
+        self.assertEqual(Path(data), app)
+
+
 class TestCommon(unittest.TestCase):
     def test_failures_in_a_row(self):
         conn = common.Connection(lambda ev: None)

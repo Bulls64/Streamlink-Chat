@@ -36,7 +36,7 @@ jobs:
       - name: GUI smoke test (Xvfb)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb python3-tk
+          bash packaging/ci_apt.sh xvfb python3-tk
           xvfb-run -a python -m unittest tests.test_gui -v
 
   coverage:
@@ -49,7 +49,7 @@ jobs:
           python-version: "3.12"
       - name: Measure (all tests, interface included, under Xvfb)
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb python3-tk
+          bash packaging/ci_apt.sh xvfb python3-tk
           python -m pip install coverage==7.13.5
           xvfb-run -a python -m coverage run -m unittest discover -s tests
       - name: Report (fails under the threshold set in .coveragerc)
@@ -120,8 +120,7 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
       - name: Install the build dependencies (Tcl/Tk with Xft)
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq build-essential libx11-dev libxft-dev libxss-dev libfontconfig-dev patchelf xvfb
+          bash packaging/ci_apt.sh build-essential libx11-dev libxft-dev libxss-dev libfontconfig-dev patchelf xvfb
       - name: Build
         run: bash packaging/appimage/build_appimage.sh dist
       - name: Smoke test (starts the AppImage under Xvfb)
@@ -154,10 +153,100 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  linux-packages:
+    name: Build the .deb and .rpm packages
+    # Même contenu que l'AppImage, installé dans /opt ; testés en vrai sur Ubuntu 22.04 (.deb) et Fedora (.rpm)
+    # Same content as the AppImage, installed in /opt; really tested on Ubuntu 22.04 (.deb) and Fedora (.rpm)
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: appimage
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Version
+        run: echo "VERSION=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' chat/__init__.py)" >> "$GITHUB_ENV"
+      - name: Download the AppImage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with:
+          name: StreamlinkChat-${{ env.VERSION }}-x86_64.AppImage
+          path: linux
+      - name: Download the .deb
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with:
+          name: ${{ env.DEB }}
+          path: linux
+      - name: Download the .rpm
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
+        with:
+          name: ${{ env.RPM }}
+          path: linux
+      - name: Install rpmbuild and Xvfb
+        run: bash packaging/ci_apt.sh rpm xvfb
+      - name: Build
+        run: |
+          chmod +x "linux/StreamlinkChat-$VERSION-x86_64.AppImage"
+          bash packaging/linux/build_packages.sh "linux/StreamlinkChat-$VERSION-x86_64.AppImage" dist
+          dpkg-deb -I "dist/streamlink-chat_${VERSION}_amd64.deb"
+          rpm -qpi "dist/streamlink-chat-$VERSION-1.x86_64.rpm"
+          rpm -qpR "dist/streamlink-chat-$VERSION-1.x86_64.rpm"
+      - name: Install and start the .deb (Ubuntu 22.04)
+        run: |
+          sudo apt-get install -y -qq --no-install-recommends "./dist/streamlink-chat_${VERSION}_amd64.deb"
+          export HOME="$RUNNER_TEMP/home" XDG_CONFIG_HOME="$RUNNER_TEMP/home/.config"
+          mkdir -p "$HOME"
+          touch "$RUNNER_TEMP/stamp"
+          set +e
+          xvfb-run -a timeout 8 streamlink-chat > run.log 2>&1
+          code=$?
+          set -e
+          cat run.log
+          fail() { echo "::error::$1"; sed 's/^/::error::  /' run.log | head -40; exit 1; }
+          [ "$code" = "124" ] || fail "The .deb's chat exited early (code $code)"
+          ! grep -q "Traceback" run.log || fail "Python traceback at start-up"
+          [ -f "$XDG_CONFIG_HOME/streamlink-chat/chat.log" ] || fail "No data written to ~/.config"
+          [ -z "$(find /opt/streamlink-chat -newer "$RUNNER_TEMP/stamp")" ] || fail "Data written to /opt"
+          sudo apt-get remove -y -qq streamlink-chat
+          [ ! -e /usr/bin/streamlink-chat ] || fail "The .deb did not uninstall cleanly"
+      - name: Install and start the .rpm (Fedora 42)
+        run: |
+          docker run --rm -v "$PWD/dist:/dist:ro" fedora:42 bash -euc '
+            dnf install -y -q --setopt=install_weak_deps=False "/dist/streamlink-chat-'"$VERSION"'-1.x86_64.rpm" \
+              xorg-x11-server-Xvfb >/dev/null
+            Xvfb :99 -screen 0 1000x760x24 >/dev/null 2>&1 &
+            sleep 2
+            export DISPLAY=:99 HOME=/tmp/h XDG_CONFIG_HOME=/tmp/h/.config
+            mkdir -p "$HOME"
+            set +e
+            timeout 8 streamlink-chat > /tmp/run.log 2>&1
+            code=$?
+            set -e
+            cat /tmp/run.log
+            [ "$code" = 124 ] || { echo "::error::The .rpm chat exited early (code $code)"; exit 1; }
+            ! grep -q Traceback /tmp/run.log || { echo "::error::Python traceback at start-up"; exit 1; }
+            [ -f /tmp/h/.config/streamlink-chat/chat.log ] || { echo "::error::No data in ~/.config"; exit 1; }
+            # Lancé ici par root, qui peut écrire dans /opt : les données doivent quand même aller dans ~/.config
+            # Started here by root, who can write to /opt: the data must still go to ~/.config
+            [ ! -e /opt/streamlink-chat/app/chat.log ] || { echo "::error::Data written to /opt"; exit 1; }
+            dnf remove -y -q streamlink-chat >/dev/null
+            [ ! -e /usr/bin/streamlink-chat ] || { echo "::error::The .rpm did not uninstall cleanly"; exit 1; }'
+      - name: Upload the .deb
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
+        with:
+          path: dist/streamlink-chat_${{ env.VERSION }}_amd64.deb
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload the .rpm
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
+        with:
+          path: dist/streamlink-chat-${{ env.VERSION }}-1.x86_64.rpm
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
+
   release:
     name: Publish the release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, appimage]
+    needs: [build, appimage, linux-packages]
     runs-on: windows-latest
     permissions:
       contents: write
@@ -166,6 +255,8 @@ jobs:
       VERSION: ${{ needs.build.outputs.version }}
       EXE: StreamlinkChat-${{ needs.build.outputs.version }}.exe
       APPIMAGE: StreamlinkChat-${{ needs.build.outputs.version }}-x86_64.AppImage
+      DEB: streamlink-chat_${{ needs.build.outputs.version }}_amd64.deb
+      RPM: streamlink-chat-${{ needs.build.outputs.version }}-1.x86_64.rpm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
@@ -186,8 +277,8 @@ jobs:
         run: |
           mkdir -p dist
           cp "unsigned/$EXE" dist/
-          cp "linux/$APPIMAGE" dist/
-          cd dist && sha256sum "$EXE" "$APPIMAGE" > SHA256SUMS.txt && cat SHA256SUMS.txt
+          cp "linux/$APPIMAGE" "linux/$DEB" "linux/$RPM" dist/
+          cd dist && sha256sum "$EXE" "$APPIMAGE" "$DEB" "$RPM" > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Release notes from CHANGELOG.md
         shell: bash
         run: |
@@ -202,9 +293,15 @@ jobs:
             echo
             echo "**Linux:** \`$APPIMAGE\` — \`chmod +x\` then run it (glibc 2.35+, e.g. Ubuntu 22.04, Debian 12, Fedora 36 or newer; Streamlink must be installed). *Linux : rendre le fichier exécutable puis le lancer.*"
             echo
+            echo "**Packages:** \`$DEB\` (Debian, Ubuntu, Mint: \`sudo apt install ./$DEB\`) and \`$RPM\` (Fedora, openSUSE: \`sudo dnf install ./$RPM\`), same content as the AppImage, with a menu entry and the \`streamlink-chat\` command. *Paquets : même contenu que l'AppImage, avec une entrée de menu et la commande streamlink-chat.*"
+            echo
             echo "SHA-256 \`$EXE\` \`$HASH\`"
             echo
             echo "SHA-256 \`$APPIMAGE\` \`$HASH_LINUX\`"
+            echo
+            echo "SHA-256 \`$DEB\` \`$(sha256sum "dist/$DEB" | cut -d' ' -f1)\`"
+            echo
+            echo "SHA-256 \`$RPM\` \`$(sha256sum "dist/$RPM" | cut -d' ' -f1)\`"
           } >> release_notes.md
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64  # v3.0.3
         with:
@@ -213,4 +310,6 @@ jobs:
           files: |
             dist/${{ env.EXE }}
             dist/${{ env.APPIMAGE }}
+            dist/${{ env.DEB }}
+            dist/${{ env.RPM }}
             dist/SHA256SUMS.txt
