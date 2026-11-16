@@ -3,6 +3,7 @@
 Interface smoke test (skipped without a screen; on Linux: xvfb-run -a python -m unittest tests.test_gui)."""
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -406,9 +407,12 @@ class TestAccounts(TestGuiSmoke):
                 mock.patch.object(app, "open_url"), mock.patch.object(app, "toast"), \
                 mock.patch.object(app, "restart_connection") as restart:
             app.login("twitch", client_id)
-            for _ in range(20):
+            # Jusqu'à 10 s : la connexion passe par un thread, lent sur les runners Windows
+            # Up to 10 s: the login goes through a thread, slow on Windows runners
+            deadline = time.time() + 10
+            while time.time() < deadline:
                 self.pump()
-                if app.cfg["accounts"]["twitch"].get("access_token"):
+                if config.load()["accounts"]["twitch"].get("access_token"):
                     break
             restart.assert_called_with("twitch")
         return started, config.load()["accounts"]["twitch"]
