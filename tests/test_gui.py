@@ -62,7 +62,11 @@ class TestGuiSmoke(unittest.TestCase):
     def tearDown(self):
         try:
             for job in self.app.tk.splitlist(self.app.tk.call("after", "info")):
-                self.app.after_cancel(job)  # plusieurs fenêtres dans un même test / several windows in one run
+                # Par Tcl directement : after_cancel() effacerait aussi la commande Python d'une tâche créée par un
+                # sous-élément, que destroy() essaierait ensuite d'effacer une seconde fois (« can't delete Tcl
+                # command »). / Through Tcl directly: after_cancel() would also delete the Python command of a task
+                # created by a child widget, which destroy() would then try to delete a second time.
+                self.app.tk.call("after", "cancel", job)
             self.app.on_close()
         finally:
             for p in self.patches:
