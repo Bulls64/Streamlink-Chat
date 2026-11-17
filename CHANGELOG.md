@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-17
+
+### Added
+- **macOS app** for Apple Silicon Macs (macOS 11 or newer): `StreamlinkChat-<version>-macOS-arm64.dmg`, with `Streamlink Chat.app` (embedded Python and Tcl/Tk, ad-hoc signed, not notarized: allow it once in *System Settings › Privacy & Security*). Built by `packaging/macos/build_dmg.sh`; the CI builds it on macOS 15, starts the app, mounts the image to check it, then attaches it to the release.
+- On macOS: data in `~/Library/Application Support/Streamlink Chat` (never inside the app bundle), Homebrew's and pipx's folders added to the `PATH` for the ▶ button, language and light/dark theme read from System Settings. Streamlink Launcher 1.8.0 finds `Streamlink Chat.app` for *Open the chat*.
+
 ### Changed
 - **Code clean-up**: unused code removed (`app_icon` and its helper, `set_text`, `set_options`, `Popover.move`, two unused regular expressions, attributes written but never read, the unused `own_name` parameter); the luminance and hex-to-RGB color helpers exist once, in `chat/common.py`, instead of twice. No change in behavior.
 
@@ -94,6 +100,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## Français
 
 ## [Non publié]
+
+## [0.4.0] - 2026-11-17
+
+### Ajouté
+- **Application macOS** pour les Mac à puce Apple (macOS 11 ou plus récent) : `StreamlinkChat-<version>-macOS-arm64.dmg`, avec `Streamlink Chat.app` (Python et Tcl/Tk embarqués, signée ad hoc, non notarisée : à autoriser une fois dans *Réglages Système › Confidentialité et sécurité*). Construite par `packaging/macos/build_dmg.sh` ; la CI la construit sous macOS 15, lance l'app, monte l'image pour la vérifier, puis la joint à la release.
+- Sous macOS : données dans `~/Library/Application Support/Streamlink Chat` (jamais dans le bundle de l'app), dossiers de Homebrew et de pipx ajoutés au `PATH` pour le bouton ▶, langue et thème clair/sombre lus dans Réglages Système. Streamlink Launcher 1.8.0 trouve `Streamlink Chat.app` pour *Ouvrir le chat*.
 
 ### Modifié
 - **Nettoyage du code** : code inutilisé supprimé (`app_icon` et sa fonction d'aide, `set_text`, `set_options`, `Popover.move`, deux expressions régulières inutilisées, des attributs écrits mais jamais lus, le paramètre inutilisé `own_name`) ; les fonctions de couleur (luminance, hexadécimal vers RVB) n'existent plus qu'une fois, dans `chat/common.py`, au lieu de deux. Aucun changement de comportement.

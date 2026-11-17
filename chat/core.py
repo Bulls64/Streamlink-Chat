@@ -5,7 +5,9 @@ import json
 import locale
 import logging
 import os
+import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +16,7 @@ from pathlib import Path
 # Paths
 # ---------------------
 FROZEN = bool(getattr(sys, "frozen", False))
+MACOS = sys.platform == "darwin"
 BASE_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent.parent
 RES_DIR = Path(getattr(sys, "_MEIPASS", BASE_DIR))
 
@@ -32,6 +35,8 @@ def _user_data_dir():
     if os.name == "nt":
         root = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
         return Path(root) / "Streamlink Chat"
+    if MACOS:
+        return Path.home() / "Library" / "Application Support" / "Streamlink Chat"
     return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "streamlink-chat"
 
 
@@ -45,7 +50,12 @@ APPIMAGE = bool(os.environ.get("APPIMAGE")) and not FROZEN and os.name != "nt"
 # .deb or .rpm package: the application is in /opt (marked by .system-install); like the AppImage, data in
 # ~/.config, even when started by root, who could write to /opt.
 SYSTEM_INSTALL = (BASE_DIR / ".system-install").is_file() and not FROZEN
-PORTABLE = not (APPIMAGE or SYSTEM_INSTALL) and _is_writable(BASE_DIR)
+# Application macOS (.app) : ne jamais écrire dans le bundle (cela casserait sa signature) ; données dans
+# ~/Library/Application Support/Streamlink Chat.
+# macOS application (.app): never write into the bundle (it would break its signature); data in
+# ~/Library/Application Support/Streamlink Chat.
+MAC_APP = FROZEN and MACOS
+PORTABLE = not (APPIMAGE or SYSTEM_INSTALL or MAC_APP) and _is_writable(BASE_DIR)
 DATA_ROOT = BASE_DIR if PORTABLE else _user_data_dir()
 LANG_DIR = BASE_DIR / "lang" if (BASE_DIR / "lang").is_dir() else RES_DIR / "lang"
 LOG_FILE = DATA_ROOT / "chat.log"
@@ -142,6 +152,19 @@ def save_json(path, data):
 # Langues
 # Languages
 # ---------------------
+def _macos_language():
+    """Première langue préférée de macOS (« fr-FR »…), ou "".
+
+    macOS's first preferred language ("fr-FR"…), or ""."""
+    try:
+        out = subprocess.run(["defaults", "read", "-g", "AppleLanguages"], capture_output=True, text=True,
+                             timeout=3).stdout
+        found = re.search(r'"?([A-Za-z]{2})[-_A-Za-z]*"?', out.replace("(", " "))
+        return found.group(1) if found else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
 def detect_system_language():
     try:
         name = locale.getlocale()[0] or ""
@@ -152,6 +175,9 @@ def detect_system_language():
         else:
             import ctypes
             name = locale.windows_locale.get(ctypes.windll.kernel32.GetUserDefaultUILanguage(), name)
+        if MACOS:  # langue choisie dans Réglages Système (une appli du Finder n'a pas LANG)
+                   # language chosen in System Settings (a Finder app has no LANG)
+            name = _macos_language() or name
         code = name.lower()[:2]
         return code if code in ("fr", "es", "de", "it") else "en"
     except Exception:
@@ -194,7 +220,16 @@ STREAMLINK_CANDIDATES = [
     r"C:\Program Files\Streamlink\bin\streamlink.exe",
     r"C:\Program Files (x86)\Streamlink\bin\streamlink.exe",
     os.path.expandvars(r"%LOCALAPPDATA%\Programs\Streamlink\bin\streamlink.exe"),
+    os.path.expanduser("~/.local/bin/streamlink"),  # pipx
 ]
+# macOS : une appli ouverte depuis le Finder n'hérite pas du PATH du terminal ; on y ajoute les dossiers de
+# Homebrew et de pipx, pour Streamlink comme pour les lecteurs qu'il lance.
+# macOS: an app opened from the Finder does not inherit the terminal's PATH; Homebrew's and pipx's folders are
+# added to it, for Streamlink as for the players it starts.
+MAC_PATHS = ["/opt/homebrew/bin", "/usr/local/bin", os.path.expanduser("~/.local/bin")]
+if MACOS:
+    _path = os.environ.get("PATH", "").split(os.pathsep)
+    os.environ["PATH"] = os.pathsep.join(_path + [d for d in MAC_PATHS if d not in _path])
 PLATFORM_ARGS = {"twitch": ["--twitch-disable-ads"]}
 QUALITIES = ["best", "1080p60", "1080p", "720p60", "720p", "480p", "audio_only"]
 

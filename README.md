@@ -67,6 +67,10 @@ sudo dnf install ./streamlink-chat-<version>-1.x86_64.rpm       # Fedora (openSU
 
 To update, install the new package the same way; to remove it, `sudo apt remove streamlink-chat` or `sudo dnf remove streamlink-chat`.
 
+#### macOS: .dmg
+
+For Macs with an Apple chip (M1 or newer), macOS 11 or newer. Download `StreamlinkChat-<version>-macOS-arm64.dmg` from the [latest release](https://github.com/Bulls64/Streamlink-Chat/releases/latest), open it and drag **Streamlink Chat** onto **Applications**. The app is not notarized by Apple: the first time, open it, then click **Open Anyway** in **System Settings › Privacy & Security**. Streamlink Launcher 1.8.0 or newer finds it there for *Open the chat*. For the ▶ button, install Streamlink with [Homebrew](https://brew.sh) (`brew install streamlink mpv`).
+
 #### From source
 
 Python 3.10 or newer, with Tcl/Tk:
@@ -94,7 +98,7 @@ Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in pla
 
 - The file must be the release asset of this repository, with the size and the SHA-256 published by GitHub, and look like a Windows executable. Redirects are followed only to GitHub. If the current executable is signed, the new one must be signed by the same publisher.
 - The previous executable is renamed `.old` and removed at the next start; on any failure, it is put back. A file named after its version (`StreamlinkChat-0.1.0.exe`) takes the new number.
-- Installing by itself only works for the Windows `.exe` in a folder you can write to. From the sources, the AppImage or a `.deb`/`.rpm` package, *Update* opens the release page instead.
+- Installing by itself only works for the Windows `.exe` in a folder you can write to. From the sources, the AppImage, a `.deb`/`.rpm` package or the macOS app, *Update* opens the release page instead.
 
 ### Keyboard
 
@@ -108,7 +112,7 @@ Tokens are saved in `chat.json`, encrypted with Windows DPAPI on Windows (in pla
 
 ### Configuration and data
 
-Files are stored next to `slink_chat.py` or the `.exe`; if that folder is read-only, in `%APPDATA%\Streamlink Chat` (Windows) or `~/.config/streamlink-chat` (Linux, always for the AppImage and the `.deb`/`.rpm` packages).
+Files are stored next to `slink_chat.py` or the `.exe`; if that folder is read-only, in `%APPDATA%\Streamlink Chat` (Windows) or `~/.config/streamlink-chat` (Linux, always for the AppImage and the `.deb`/`.rpm` packages) or `~/Library/Application Support/Streamlink Chat` (macOS app).
 
 | File | Content |
 |---|---|
@@ -125,6 +129,7 @@ Streamlink Chat connects only to: the chats themselves (Twitch IRC, Kick at `kic
 - **Windows executable**: `packaging\build_exe.bat` (PyInstaller, version pinned in `packaging/requirements-build.txt`) produces `dist\Streamlink Chat.exe`.
 - **AppImage**: `bash packaging/appimage/build_appimage.sh` (needs `build-essential libx11-dev libxft-dev libxss-dev libfontconfig-dev patchelf`); it bundles a standalone Python and recompiles Tcl/Tk with Xft for smooth text.
 - **.deb and .rpm**: `bash packaging/linux/build_packages.sh dist/StreamlinkChat-<version>-x86_64.AppImage` (needs `rpm` for rpmbuild); made from the AppImage. The CI installs and starts the `.deb` on Ubuntu 22.04 and the `.rpm` on Fedora.
+- **macOS app**: `bash packaging/macos/build_dmg.sh` on an Apple Silicon Mac (Python 3.12 with Tcl/Tk) produces `dist/StreamlinkChat-<version>-macOS-arm64.dmg` (PyInstaller, ad-hoc signed). The CI builds it on macOS 15, starts the app and mounts the image to check it.
 - On GitHub Actions, every pull request builds both, and pushing a `v*` tag publishes them with `SHA256SUMS.txt`.
 
 ### Tests
@@ -204,6 +209,10 @@ sudo dnf install ./streamlink-chat-<version>-1.x86_64.rpm       # Fedora (openSU
 
 Pour mettre à jour, installe le nouveau paquet de la même façon ; pour le désinstaller, `sudo apt remove streamlink-chat` ou `sudo dnf remove streamlink-chat`.
 
+#### macOS : .dmg
+
+Pour les Mac à puce Apple (M1 ou plus récent), macOS 11 ou plus récent. Télécharge `StreamlinkChat-<version>-macOS-arm64.dmg` depuis la [dernière release](https://github.com/Bulls64/Streamlink-Chat/releases/latest), ouvre-le et glisse **Streamlink Chat** sur **Applications**. L'app n'est pas notarisée par Apple : la première fois, ouvre-la, puis clique sur **Ouvrir quand même** dans **Réglages Système › Confidentialité et sécurité**. Streamlink Launcher 1.8.0 ou plus récent l'y trouve pour *Ouvrir le chat*. Pour le bouton ▶, installe Streamlink avec [Homebrew](https://brew.sh) (`brew install streamlink mpv`).
+
 #### Depuis les sources
 
 Python 3.10 ou plus récent, avec Tcl/Tk :
@@ -231,7 +240,7 @@ Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows 
 
 - Le fichier doit être celui de la release de ce dépôt, avec la taille et l'empreinte SHA-256 publiées par GitHub, et ressembler à un exécutable Windows. Les redirections ne sont suivies que vers GitHub. Si l'exécutable actuel est signé, le nouveau doit l'être par le même éditeur.
 - L'ancien exécutable est renommé `.old` et supprimé au démarrage suivant ; en cas d'échec, il est remis en place. Un fichier nommé d'après sa version (`StreamlinkChat-0.1.0.exe`) prend le nouveau numéro.
-- L'installation automatique ne concerne que l'`.exe` Windows placé dans un dossier modifiable. Depuis les sources, l'AppImage ou un paquet `.deb`/`.rpm`, *Mettre à jour* ouvre la page de la release.
+- L'installation automatique ne concerne que l'`.exe` Windows placé dans un dossier modifiable. Depuis les sources, l'AppImage, un paquet `.deb`/`.rpm` ou l'application macOS, *Mettre à jour* ouvre la page de la release.
 
 ### Clavier
 
@@ -245,7 +254,7 @@ Les jetons sont enregistrés dans `chat.json`, chiffrés par DPAPI sous Windows 
 
 ### Configuration et données
 
-Les fichiers sont rangés à côté de `slink_chat.py` ou du `.exe` ; si ce dossier est protégé en écriture, dans `%APPDATA%\Streamlink Chat` (Windows) ou `~/.config/streamlink-chat` (Linux, toujours pour l'AppImage et les paquets `.deb`/`.rpm`).
+Les fichiers sont rangés à côté de `slink_chat.py` ou du `.exe` ; si ce dossier est protégé en écriture, dans `%APPDATA%\Streamlink Chat` (Windows) ou `~/.config/streamlink-chat` (Linux, toujours pour l'AppImage et les paquets `.deb`/`.rpm`) ou `~/Library/Application Support/Streamlink Chat` (application macOS).
 
 | Fichier | Contenu |
 |---|---|
@@ -262,6 +271,7 @@ Streamlink Chat ne se connecte qu'aux chats eux-mêmes (IRC Twitch, Kick via `ki
 - **Exécutable Windows** : `packaging\build_exe.bat` (PyInstaller, version figée dans `packaging/requirements-build.txt`) produit `dist\Streamlink Chat.exe`.
 - **AppImage** : `bash packaging/appimage/build_appimage.sh` (paquets `build-essential libx11-dev libxft-dev libxss-dev libfontconfig-dev patchelf`) ; elle embarque un Python autonome et recompile Tcl/Tk avec Xft pour un texte lissé.
 - **.deb et .rpm** : `bash packaging/linux/build_packages.sh dist/StreamlinkChat-<version>-x86_64.AppImage` (paquet `rpm` pour rpmbuild) ; faits à partir de l'AppImage. La CI installe et lance le `.deb` sous Ubuntu 22.04 et le `.rpm` sous Fedora.
+- **Application macOS** : `bash packaging/macos/build_dmg.sh` sur un Mac à puce Apple (Python 3.12 avec Tcl/Tk) produit `dist/StreamlinkChat-<version>-macOS-arm64.dmg` (PyInstaller, signée ad hoc). La CI la construit sous macOS 15, lance l'app et monte l'image pour la vérifier.
 - Sur GitHub Actions, chaque pull request construit les deux, et pousser un tag `v*` les publie avec `SHA256SUMS.txt`.
 
 ### Tests
