@@ -3,6 +3,7 @@
 Colors, fonts and window settings specific to Windows (all optional elsewhere)."""
 import logging
 import os
+import sys
 import tkinter.font as tkfont
 
 from ..common import hex_to_rgb, luminance
@@ -87,6 +88,14 @@ def system_theme():
             return "light" if value else "dark"
         except OSError:
             log.debug("Thème de Windows illisible", exc_info=True)
+    elif sys.platform == "darwin":  # « Dark » seulement en mode sombre / "Dark" only in dark mode
+        import subprocess
+        try:
+            out = subprocess.run(["defaults", "read", "-g", "AppleInterfaceStyle"], capture_output=True, text=True,
+                                 timeout=3).stdout
+            return "dark" if "dark" in out.lower() else "light"
+        except (OSError, subprocess.SubprocessError):
+            pass
     return "dark"
 
 
@@ -98,10 +107,10 @@ def resolve_theme(setting):
 # Polices
 # Fonts
 # ---------------------
-SANS = ["Segoe UI Variable Text", "Segoe UI", "Figtree", "Inter", "Helvetica Neue", "DejaVu Sans"]
+SANS = ["Segoe UI Variable Text", "Segoe UI", "Figtree", "Inter", ".AppleSystemUIFont", "Helvetica Neue", "DejaVu Sans"]
 SEMIBOLD = ["Segoe UI Variable Text Semibold", "Segoe UI Semibold"]
 DISPLAY = ["Segoe UI Variable Display Semib", "Segoe UI Variable Display Semibold", "Segoe UI Semibold"]
-MONO = ["Cascadia Mono", "Cascadia Code", "Consolas", "JetBrains Mono", "DejaVu Sans Mono"]
+MONO = ["Cascadia Mono", "Cascadia Code", "Consolas", "JetBrains Mono", "SF Mono", "Menlo", "DejaVu Sans Mono"]
 ICONS = ["Segoe Fluent Icons", "Segoe MDL2 Assets"]
 
 

@@ -553,6 +553,39 @@ class TestSteam(unittest.TestCase):
 # Commun, réglages, emotes, comptes
 # Common, settings, emotes, accounts
 # ---------------------
+@unittest.skipIf(os.name == "nt", "simulation de macOS : pas sous Windows")
+class TestMacApp(unittest.TestCase):
+    """Application macOS (.app) simulée : données dans ~/Library/Application Support, jamais dans le bundle ;
+    PATH complété pour Homebrew ; langue de Réglages Système.
+
+    Simulated macOS application (.app): data in ~/Library/Application Support, never in the bundle;
+    PATH completed for Homebrew; language from System Settings."""
+
+    def test_bundle(self):
+        import subprocess
+        root = Path(tempfile.mkdtemp())
+        exe = root / "Applications" / "Streamlink Chat.app" / "Contents" / "MacOS" / "Streamlink Chat"
+        exe.parent.mkdir(parents=True)
+        exe.write_text("")
+        code = ("import os, sys; sys.platform = 'darwin'; sys.frozen = True; sys.executable = sys.argv[1]; "
+                "from chat import core; "
+                "print(core.MAC_APP, core.PORTABLE, core.DATA_ROOT, '/opt/homebrew/bin' in os.environ['PATH'], sep='|')")
+        env = {k: v for k, v in os.environ.items() if k not in ("APPIMAGE", "XDG_CONFIG_HOME")}
+        env["HOME"] = str(root / "home")
+        out = subprocess.run([sys.executable, "-c", code, str(exe)], cwd=ROOT, env=env, capture_output=True,
+                             text=True, check=True).stdout.strip().split("|")
+        self.assertEqual(out[:2], ["True", "False"])
+        self.assertEqual(Path(out[2]), root / "home" / "Library" / "Application Support" / "Streamlink Chat")
+        self.assertEqual(out[3], "True")
+
+    def test_language(self):
+        from chat import core
+        with mock.patch.object(core.subprocess, "run", return_value=mock.Mock(stdout='(\n    "de-DE"\n)\n')):
+            self.assertEqual(core._macos_language(), "de")
+        with mock.patch.object(core.subprocess, "run", side_effect=OSError):
+            self.assertEqual(core._macos_language(), "")
+
+
 class TestSystemInstall(unittest.TestCase):
     """Paquet .deb ou .rpm : le dossier de l'appli (/opt) porte .system-install ; les données vont dans ~/.config,
     même si le dossier est modifiable (lancé par root).
